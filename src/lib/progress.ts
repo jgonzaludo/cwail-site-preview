@@ -10,8 +10,8 @@ export interface Module {
   sections: Section[];
 }
 
-const PROGRESS_KEY = 'cwail.completed';
-const MODULE_KEY = 'cwail-module';
+const PROGRESS_KEY = 'cwail:progress';
+const MODULE_KEY = 'cwail:module';
 
 let moduleCache: Module | null = null;
 
@@ -83,6 +83,19 @@ export function unmarkCompleted(id: string): void {
   setCompleted(id, false);
 }
 
+export function hasSubmittedResponse(sectionId: string): boolean {
+  // Check if there's a submitted response for this section
+  if (sectionId === 'conclusion') {
+    // Conclusion section uses different storage mechanism
+    const conclusionData = storage.get('conclusion-response', null);
+    return conclusionData && conclusionData.response && conclusionData.response.trim().length > 0;
+  } else {
+    // Other sections use the standard response storage
+    const response = storage.get(`cwail:response:${sectionId}`, '');
+    return response.trim().length > 0;
+  }
+}
+
 export function completedCount(): number {
   return getCompleted().length;
 }
@@ -117,6 +130,39 @@ export function canAccessPartingMessage(): boolean {
 
 export function canAccessQuiz(): boolean {
   return allRequiredCompleted();
+}
+
+export function canAccessSection(sectionId: string): boolean {
+  const module = getModule();
+  const allSections = module.sections;
+  const currentIndex = allSections.findIndex(s => s.id === sectionId);
+  
+  // If section not found, allow access
+  if (currentIndex === -1) {
+    return true;
+  }
+  
+  // First section is always accessible
+  if (currentIndex === 0) {
+    return true;
+  }
+  
+  // Optional/exploratory sections - only require the immediately previous section
+  const optionalSections = ['try-it-out', 'professional-case'];
+  if (optionalSections.includes(sectionId)) {
+    const previousSection = allSections[currentIndex - 1];
+    return previousSection ? getCompleted().includes(previousSection.id) : true;
+  }
+  
+  // For required sections, check if all previous sections are completed
+  const completed = getCompleted();
+  for (let i = 0; i < currentIndex; i++) {
+    if (!completed.includes(allSections[i].id)) {
+      return false;
+    }
+  }
+  
+  return true;
 }
 
 export function getAllRequiredSections(): string[] {

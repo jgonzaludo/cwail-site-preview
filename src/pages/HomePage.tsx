@@ -25,16 +25,35 @@ const HomePage: React.FC = () => {
           overlayOpacity={0.06}
         >
           <div className="relative z-20 text-white max-w-7xl mx-auto text-center px-4 py-24 lg:py-32">
-            <p className="text-sm md:text-base uppercase opacity-80">Companion for Writing with AI Literacy</p>
-            <h1 className="mt-4 text-2xl md:text-4xl lg:text-5xl font-extrabold leading-tight whitespace-nowrap">AI is here. We all use it. Let's use it well.</h1>
-            <div className="mt-8">
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-sm md:text-base uppercase opacity-80"
+            >
+              Companion for Writing with AI Literacy
+            </motion.p>
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="mt-4 text-2xl md:text-4xl lg:text-5xl font-extrabold leading-tight whitespace-nowrap"
+            >
+              AI is here. We all use it. Let's use it well.
+            </motion.h1>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              className="mt-8"
+            >
               <Link 
                 to="/course/introduction" 
                 className="inline-block bg-white/20 dark:bg-black/20 backdrop-blur-sm text-white px-6 py-3 rounded-lg border border-white/30 dark:border-white/20 hover:bg-white/30 dark:hover:bg-black/30 transition-all duration-300 shadow-lg"
               >
                 Begin the 15-Minute Module →
               </Link>
-            </div>
+            </motion.div>
           </div>
         </GradientBackground>
       </section>

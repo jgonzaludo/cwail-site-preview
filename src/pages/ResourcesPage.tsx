@@ -1,5 +1,7 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { FileText, Download } from 'lucide-react';
+import { RevealOnScroll } from '../components/RevealOnScroll';
 
 const ResourcesPage: React.FC = () => {
   const resources = [
@@ -26,16 +28,22 @@ const ResourcesPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             [TK] Resources Title
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Downloadable resources and materials for classroom use
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <RevealOnScroll>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {resources.map((resource) => (
             <div key={resource.id} className="bg-white dark:bg-gray-900 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-100 dark:border-gray-800">
               <div className="p-6">
@@ -56,7 +64,8 @@ const ResourcesPage: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        </RevealOnScroll>
       </div>
     </div>
   );

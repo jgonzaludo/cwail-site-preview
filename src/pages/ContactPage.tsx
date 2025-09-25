@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Mail, MapPin, Send, CheckCircle } from 'lucide-react';
+import { RevealOnScroll } from '../components/RevealOnScroll';
 
 const ContactPage: React.FC = () => {
   const [formSubmitted, setFormSubmitted] = useState(false);
@@ -13,13 +15,19 @@ const ContactPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             [TK] Contact Title
           </h1>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <RevealOnScroll>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
             <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Send us a message</h2>
@@ -108,7 +116,8 @@ const ContactPage: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+          </div>
+        </RevealOnScroll>
       </div>
     </div>
   );

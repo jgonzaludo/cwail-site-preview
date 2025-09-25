@@ -7,14 +7,18 @@ import Accordion from '../components/Accordion';
 import Callout from '../components/Callout';
 import Toast from '../components/Toast';
 import PartingMessageModal from '../components/PartingMessageModal';
-import { setCompleted, isCompleted, getProgressPercentage, nextSectionId, canAccessConclusion, canAccessPartingMessage } from '../lib/progress';
+import SubmissionBox from '../components/SubmissionBox';
+import TokenLabEmbed from '../components/TokenLabEmbed';
+import { RevealOnScroll } from '../components/RevealOnScroll';
+import { setCompleted, isCompleted, getProgressPercentage, nextSectionId, canAccessConclusion, canAccessPartingMessage, getAllRequiredSections, hasSubmittedResponse, canAccessSection } from '../lib/progress';
 
 interface Block {
-  type: 'h2' | 'p' | 'accordion' | 'callout' | 'cta';
+  type: 'h2' | 'p' | 'accordion' | 'callout' | 'cta' | 'shortResponseBox' | 'ul' | 'tokenWorkshop';
   text: string;
-  variant?: 'info' | 'warning' | 'example' | 'next';
-  items?: { title: string; content: string }[];
+  variant?: 'info' | 'warning' | 'example' | 'next' | 'lab';
+  items?: (string | { title: string; content: string })[];
   href?: string;
+  label?: string;
 }
 
 interface Section {
@@ -39,10 +43,36 @@ const CoursePage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [isChecked, setIsChecked] = useState(false);
   const [showPartingModal, setShowPartingModal] = useState(false);
+  const [isMarkedComplete, setIsMarkedComplete] = useState(false);
   const [conclusionResponse, setConclusionResponse] = useState('');
   const [aiDisclosure, setAiDisclosure] = useState('');
   const [otherExplanation, setOtherExplanation] = useState('');
   const [openItems, setOpenItems] = useState<Set<number>>(new Set());
+  const [showResponseTooltip, setShowResponseTooltip] = useState(false);
+  const [responseSubmittedThisSession, setResponseSubmittedThisSession] = useState(false);
+  const [submissionBoxSubmitted, setSubmissionBoxSubmitted] = useState(false);
+  const [showAccordionTooltip, setShowAccordionTooltip] = useState(false);
+
+  // Check if current section requires a response
+  const sectionRequiresResponse = (sectionId: string): boolean => {
+    // Sections that require responses
+    const responseRequiredSections = ['introduction', 'conclusion'];
+    return responseRequiredSections.includes(sectionId);
+  };
+
+  // Simple check: if section has accordions, require them to be expanded
+  const sectionHasAccordions = (section: Section | null): boolean => {
+    if (!section) return false;
+    return (section.sections && section.sections.length > 0) || 
+           (section.blocks?.some(block => block.type === 'accordion') || false);
+  };
+
+  // Simple check: count expanded accordions in DOM
+  const allAccordionsExpanded = (): boolean => {
+    const allButtons = document.querySelectorAll('[aria-controls^="accordion-content-"]');
+    const expandedButtons = document.querySelectorAll('[aria-expanded="true"]');
+    return allButtons.length > 0 && allButtons.length === expandedButtons.length;
+  };
 
   useEffect(() => {
     // Listen for custom event to open parting message
@@ -72,6 +102,11 @@ const CoursePage: React.FC = () => {
         const sectionData = await response.json();
         setSection(sectionData);
         setIsChecked(isCompleted(sectionId));
+        setIsMarkedComplete(isCompleted(sectionId));
+        setShowResponseTooltip(false);
+        setShowAccordionTooltip(false);
+        setResponseSubmittedThisSession(hasSubmittedResponse(sectionId));
+        setSubmissionBoxSubmitted(hasSubmittedResponse(sectionId));
       } catch (err) {
         console.error('Failed to load section:', err);
         setError(err instanceof Error ? err.message : 'Failed to load section');
@@ -83,9 +118,31 @@ const CoursePage: React.FC = () => {
     loadSection();
   }, [sectionId]);
 
+
+
   const handleCheckboxChange = (checked: boolean) => {
     if (sectionId) {
-      setIsChecked(checked);
+      // Check if response is required but not submitted (either in storage, this session, or submission box)
+      const hasResponse = hasSubmittedResponse(sectionId) || responseSubmittedThisSession || submissionBoxSubmitted;
+      if (checked && sectionRequiresResponse(sectionId) && !hasResponse) {
+        setShowResponseTooltip(true);
+        // Hide tooltip after 3 seconds
+        setTimeout(() => setShowResponseTooltip(false), 3000);
+        return;
+      }
+      
+      // Check if accordions need to be expanded
+      if (checked && sectionHasAccordions(section) && !allAccordionsExpanded()) {
+        setShowAccordionTooltip(true);
+        // Hide tooltip after 3 seconds
+        setTimeout(() => setShowAccordionTooltip(false), 3000);
+        return;
+      }
+      
+      // Reset tooltip states when successfully checking
+      setShowResponseTooltip(false);
+      setShowAccordionTooltip(false);
+      setIsMarkedComplete(checked);
       setCompleted(sectionId, checked);
       setToastMessage(checked ? 'Marked complete' : 'Marked incomplete');
       setShowToast(true);
@@ -94,15 +151,43 @@ const CoursePage: React.FC = () => {
 
   const handleNext = () => {
     if (sectionId) {
-      // If completing conclusion, show parting message modal
-      if (sectionId === 'conclusion' && isChecked) {
-        setShowPartingModal(true);
+      // Check if this is the first section or if previous section is completed
+      const requiredSections = getAllRequiredSections();
+      const currentIndex = requiredSections.indexOf(sectionId);
+      
+      if (currentIndex > 0) {
+        const previousSection = requiredSections[currentIndex - 1];
+        if (!isCompleted(previousSection)) {
+          setToastMessage(`Please complete "${previousSection}" section first.`);
+          setShowToast(true);
+          return;
+        }
+      }
+      
+      // Check if current section is marked as complete
+      if (!isMarkedComplete) {
+        setToastMessage('Please mark this section as complete before proceeding.');
+        setShowToast(true);
         return;
       }
       
-      const next = nextSectionId(sectionId);
-      if (next) {
-        navigate(`/course/${next}`);
+      // Navigate to next section
+      if (sectionId !== 'conclusion') {
+        const next = nextSectionId(sectionId);
+        if (next) {
+          navigate(`/course/${next}`);
+        }
+      } else {
+        // If completing conclusion, show parting message modal
+        if (isChecked) {
+          setShowPartingModal(true);
+          return;
+        }
+        
+        const next = nextSectionId(sectionId);
+        if (next) {
+          navigate(`/course/${next}`);
+        }
       }
     }
   };
@@ -159,16 +244,38 @@ const CoursePage: React.FC = () => {
           </p>
         );
       
+      case 'ul':
+        return (
+          <ul key={index} className="list-disc list-inside text-gray-700 dark:text-gray-300 mb-4 space-y-2">
+            {block.items?.map((item, itemIndex) => (
+              <li key={itemIndex}>
+                {typeof item === 'string' ? item : (item.title || item.content)}
+              </li>
+            ))}
+          </ul>
+        );
+      
       case 'accordion':
         return (
           <Accordion 
             key={index} 
-            items={block.items || []} 
+            items={(block.items || []).filter((item): item is { title: string; content: string } => 
+              typeof item === 'object' && 'title' in item && 'content' in item
+            )}
             className="mb-6"
           />
         );
       
       case 'callout':
+        // Special handling for token workshop placeholder
+        if (block.text === '[Token Workshop Interactive Element here]') {
+          return (
+            <TokenLabEmbed
+              key={index}
+              className="mb-6"
+            />
+          );
+        }
         return (
           <Callout 
             key={index}
@@ -178,17 +285,42 @@ const CoursePage: React.FC = () => {
           />
         );
       
+      case 'tokenWorkshop':
+        return (
+          <TokenLabEmbed
+            key={index}
+            className="mb-6"
+          />
+        );
+      
+      case 'shortResponseBox':
+        return (
+          <SubmissionBox
+            key={index}
+            id="intro_prompt"
+            minWords={100}
+            maxWords={250}
+            placeholder="Enter your response here..."
+            onSubmitted={() => {
+              setToastMessage('Response submitted successfully!');
+              setShowToast(true);
+              setShowResponseTooltip(false);
+              setResponseSubmittedThisSession(true);
+            }}
+            onSubmittedStateChange={(isSubmitted) => {
+              setSubmissionBoxSubmitted(isSubmitted);
+            }}
+          />
+        );
+      
       case 'cta':
         if (block.variant === 'next') {
-          return (
-            <button
-              key={index}
-              onClick={handleNext}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              {block.text}
-            </button>
-          );
+          // Don't render Next Section buttons from content - we handle this at the page level
+          return null;
+        }
+        if (block.variant === 'lab' && block.href) {
+          // Skip rendering the "Open the Tokenization Lab" button since we have the embedded version
+          return null;
         }
         return (
           <button
@@ -216,12 +348,6 @@ const CoursePage: React.FC = () => {
           items={section.sections} 
           className="mb-6"
         />
-        <button
-          onClick={handleNext}
-          className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          Next section
-        </button>
       </div>
     );
   };
@@ -312,14 +438,6 @@ const CoursePage: React.FC = () => {
             </div>
           </div>
         )}
-
-        {/* Next button */}
-        <button
-          onClick={handleNext}
-          className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          Next section
-        </button>
       </div>
     );
   };
@@ -441,14 +559,6 @@ const CoursePage: React.FC = () => {
             </p>
           </div>
         )}
-
-        {/* Next button */}
-        <button
-          onClick={handleNext}
-          className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          Next section
-        </button>
       </div>
     );
   };
@@ -614,6 +724,22 @@ const CoursePage: React.FC = () => {
     );
   }
 
+  // Check if section can be accessed based on previous sections being completed
+  if (sectionId && !canAccessSection(sectionId)) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <SectionNav />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <p className="text-red-800 dark:text-red-200">
+              Finish all sections before this to access this page.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <SectionNav />
@@ -635,36 +761,82 @@ const CoursePage: React.FC = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-          {sectionId === 'conclusion' && section.content ? (
-            renderConclusionContent()
-          ) : section.lead && section.sections ? (
-            renderLeadWithAccordions()
-          ) : section.content && section.examples ? (
-            renderContentWithExamples()
-          ) : section.sections ? (
-            renderNewStructure()
-          ) : (
-            section.blocks?.map((block, index) => renderBlock(block, index))
-          )}
+        <RevealOnScroll>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            {sectionId === 'conclusion' && section.content ? (
+              renderConclusionContent()
+            ) : section.lead && section.sections ? (
+              renderLeadWithAccordions()
+            ) : section.content && section.examples ? (
+              renderContentWithExamples()
+            ) : section.sections ? (
+              renderNewStructure()
+            ) : (
+              section.blocks?.map((block, index) => renderBlock(block, index))
+            )}
           
-          {/* Completion Checkbox - only show for non-conclusion sections */}
-          {sectionId !== 'conclusion' && (
-            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isChecked}
-                  onChange={(e) => handleCheckboxChange(e.target.checked)}
-                  className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-colors"
-                />
-                <span className="text-gray-700 dark:text-gray-300 font-medium">
-                  Mark this section as complete
-                </span>
-              </label>
+          {/* Mark Complete Checkbox and Next Section Button - show for all sections except conclusion */}
+          {sectionId && sectionId !== 'conclusion' && (
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="relative group">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isMarkedComplete}
+                    onChange={(e) => handleCheckboxChange(e.target.checked)}
+                    className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-colors"
+                  />
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">
+                    Mark this section as complete
+                  </span>
+                </label>
+                
+                {/* Tooltip for when response is required but not submitted */}
+                {showResponseTooltip && (
+                  <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-red-600 text-white text-sm rounded-lg opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                    Submit response first
+                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-red-600"></div>
+                  </div>
+                )}
+                
+                {/* Tooltip for when accordions need to be expanded */}
+                {showAccordionTooltip && (
+                  <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-red-600 text-white text-sm rounded-lg opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                    Expand all accordion elements first
+                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-red-600"></div>
+                  </div>
+                )}
+              </div>
+              
+              {(() => {
+                // Use canAccessSection to determine if section can be accessed
+                const canAccess = canAccessSection(sectionId);
+                const canProceed = canAccess && isMarkedComplete;
+                
+                return (
+                  <button
+                    onClick={handleNext}
+                    disabled={!canProceed}
+                    className={`inline-flex items-center px-6 py-3 font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                      canProceed
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500'
+                        : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    }`}
+                    aria-label={canProceed ? 'Continue to next section' : 'Complete previous section and mark as complete first'}
+                  >
+                    {!canAccess 
+                      ? 'Complete Previous Section First'
+                      : !isMarkedComplete 
+                        ? 'Next Section'
+                        : 'Next Section'
+                    }
+                  </button>
+                );
+              })()}
             </div>
           )}
-        </div>
+          </div>
+        </RevealOnScroll>
       </div>
 
       {/* Toast Notification */}
@@ -682,6 +854,7 @@ const CoursePage: React.FC = () => {
         onClose={() => setShowPartingModal(false)}
         onProceed={handleProceedToQuiz}
       />
+
     </div>
   );
 };

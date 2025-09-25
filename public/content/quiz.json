@@ -1,0 +1,159 @@
+{
+  "id": "cwail-final-quiz",
+  "title": "CWAIL Final Quiz",
+  "questions": [
+    {
+      "id": "q1_tokenization",
+      "type": "multipleChoiceSingle",
+      "question": "Which of the following best describes the process of tokenization?",
+      "options": [
+        "The process by which an LLM gains a rich, human-like understanding of language.",
+        "The process by which an LLM divides training text into discrete linguistic elements and assigns each a vector value.",
+        "The process by which an LLM makes educated guesses about which linguistic tokens appear in sequence.",
+        "The process by which an LLM continues to learn following initial ingestion of training data."
+      ],
+      "correctAnswer": "The process by which an LLM divides training text into discrete linguistic elements and assigns each a vector value.",
+      "points": 1,
+      "explanation": "Tokenization is the process by which an LLM divides training text into discrete linguistic elements and assigns each a vector value."
+    },
+    {
+      "id": "q2_known_flaw",
+      "type": "multipleChoiceSingle",
+      "question": "Which of the following is a known flaw of LLMs?",
+      "options": [
+        "An inability to produce human-like writing",
+        "Prohibitively long processing times",
+        "Difficulty in processing informal language or language with small grammatical errors",
+        "A tendency to occasionally \"hallucinate\" nonexistent evidence for claims"
+      ],
+      "correctAnswer": "A tendency to occasionally \"hallucinate\" nonexistent evidence for claims",
+      "points": 1,
+      "explanation": "LLMs have a tendency to occasionally \"hallucinate\" nonexistent evidence for claims."
+    },
+    {
+      "id": "q3_academic_observation",
+      "type": "multipleChoiceSingle",
+      "question": "Which of the following observations about LLM usage in academic contexts is most accurate?",
+      "options": [
+        "Any usage of an LLM in an academic context is unacceptable and unethical.",
+        "University policies regarding AI usage tend to be standardized across classrooms and institutions.",
+        "Uncritical LLM usage can expose student writers to accusations of plagiarism via hallucinations and inaccurate attributions.",
+        "Frequent reliance on AI tools like LLMs in an academic context is conducive to student learning."
+      ],
+      "correctAnswer": "Uncritical LLM usage can expose student writers to accusations of plagiarism via hallucinations and inaccurate attributions.",
+      "points": 1,
+      "explanation": "Uncritical LLM usage can expose student writers to accusations of plagiarism via hallucinations and inaccurate attributions."
+    },
+    {
+      "id": "q4_inaccurate_observation",
+      "type": "multipleChoiceSingle",
+      "question": "Which of the following observations about how LLMs work is inaccurate?",
+      "options": [
+        "LLMs can assess the truthfulness of their own output, allowing them to catch mistakes.",
+        "LLMs generate realistic responses by making statistical inferences about which sequences of linguistic tokens are most likely to satisfy the user.",
+        "LLMs' responses tend to be constrained by the boundaries of their training data; they cannot independently \"learn\" about knowledge domains outside this data.",
+        "LLMs can rapidly produce realistic, human-like responses to queries about a huge range of topics."
+      ],
+      "correctAnswer": "LLMs can assess the truthfulness of their own output, allowing them to catch mistakes.",
+      "points": 1,
+      "explanation": "LLMs cannot assess the truthfulness of their own output, allowing them to catch mistakes. This statement is inaccurate."
+    },
+    {
+      "id": "q5_check_all_evidence",
+      "type": "multipleChoiceMultiple",
+      "question": "Check all of the following statements about AI and/or the professional applications of writing skills that are supported by evidence.",
+      "options": [
+        "Students who rely heavily on LLMs for help on coursework do just as well as students who do not on tests of course material.",
+        "Most university-level students know about LLMs, and—at least in certain fields—have already integrated them into their routine study habits.",
+        "The precise nature of a student's LLM usage makes no difference in terms of neural connectivity; all usages engage the brain equally.",
+        "Strategic uses of LLM can avoid many of the risks to cognitive development/learning reported in early research.",
+        "Researchers have made the \"preliminary observation\" that LLM users' responses to essay prompts tend to encompass a narrower range of ideas than non-LLM users.",
+        "Some students report misgivings about their potential dependence on AI tools for schoolwork.",
+        "Due to the rise of LLMs, most modern employers do not report writing and communication skills as particularly valuable qualities in job candidates."
+      ],
+      "correctAnswer": [
+        "Most university-level students know about LLMs, and—at least in certain fields—have already integrated them into their routine study habits.",
+        "Strategic uses of LLM can avoid many of the risks to cognitive development/learning reported in early research.",
+        "Researchers have made the \"preliminary observation\" that LLM users' responses to essay prompts tend to encompass a narrower range of ideas than non-LLM users.",
+        "Some students report misgivings about their potential dependence on AI tools for schoolwork."
+      ],
+      "points": 15,
+      "explanation": "These four statements are supported by evidence from research on AI usage in academic contexts."
+    },
+    {
+      "id": "q6_order_writing_process",
+      "type": "multipleChoiceSingle",
+      "question": "Arrange the stages of the writing process (as defined in this module) in order.",
+      "options": [
+        "Invention → Drafting → Revision → Editing/Publishing",
+        "Drafting → Invention → Revision → Editing/Publishing",
+        "Invention → Revision → Drafting → Editing/Publishing",
+        "Drafting → Revision → Invention → Editing/Publishing"
+      ],
+      "correctAnswer": "Invention → Drafting → Revision → Editing/Publishing",
+      "points": 1,
+      "explanation": "The correct order of the writing process stages is: Invention → Drafting → Revision → Editing/Publishing."
+    },
+    {
+      "id": "q7_fill_blank_rule",
+      "type": "multipleChoiceSingle",
+      "question": "Fill in the blank to complete this module's 'rule of thumb' for uses of AI that preserve the writing process.\n\nUses of AI that preserve the writing process tend to be those that __________.",
+      "options": [
+        "Replace you",
+        "Replace your computer",
+        "Replace other people or tools",
+        "Replace your search engine"
+      ],
+      "correctAnswer": "Replace other people or tools",
+      "points": 1,
+      "explanation": "Uses of AI that preserve the writing process tend to be those that replace other people or tools."
+    },
+    {
+      "id": "q8_ethical_use",
+      "type": "multipleChoiceSingle",
+      "question": "Which of the following would be an acceptable, ethical use of an LLM in most academic contexts?",
+      "options": [
+        "Using an LLM to suggest potential topics for a paper.",
+        "Using an LLM to write a paper for you.",
+        "Using an LLM to perform style revisions on an old paper such that it appears new.",
+        "Using an LLM to quickly add sources to a key paragraph so that you don't have to read them yourself."
+      ],
+      "correctAnswer": "Using an LLM to suggest potential topics for a paper.",
+      "points": 1,
+      "explanation": "Using an LLM to suggest potential topics for a paper is an acceptable, ethical use in most academic contexts."
+    },
+    {
+      "id": "q9_unethical_use",
+      "type": "multipleChoiceSingle",
+      "question": "Which of the following would be an unacceptable, unethical use of an LLM in most academic contexts?",
+      "options": [
+        "Using an LLM to gather sources",
+        "Using an LLM to help format citations correctly",
+        "Using an LLM to summarize sources for your review",
+        "Using an LLM to generate answers to an instructor's reading response prompts."
+      ],
+      "correctAnswer": "Using an LLM to generate answers to an instructor's reading response prompts.",
+      "points": 1,
+      "explanation": "Using an LLM to generate answers to an instructor's reading response prompts would be an unacceptable, unethical use."
+    },
+    {
+      "id": "q10_productivity_checks",
+      "type": "multipleChoiceMultiple",
+      "question": "Which of the following uses of an LLM could enhance your productivity without interfering with learning or exposing you to ethical risks? Check all that apply.",
+      "options": [
+        "Using an LLM to automatically generate minutes for a meeting.",
+        "Using an LLM to generate feedback on your writing for your review.",
+        "Using an LLM to automate small, tedious changes to a series of documents.",
+        "Using an LLM to rapidly generate a list of category-specific examples."
+      ],
+      "correctAnswer": [
+        "Using an LLM to automatically generate minutes for a meeting.",
+        "Using an LLM to generate feedback on your writing for your review.",
+        "Using an LLM to automate small, tedious changes to a series of documents.",
+        "Using an LLM to rapidly generate a list of category-specific examples."
+      ],
+      "points": 15,
+      "explanation": "All four uses of an LLM could enhance productivity without interfering with learning or exposing you to ethical risks."
+    }
+  ]
+}

@@ -11,12 +11,6 @@
       "type": "callout",
       "variant": "info",
       "text": "[Token Workshop Interactive Element here]"
-    },
-    {
-      "type": "cta",
-      "variant": "lab",
-      "href": "/lab/tokenization",
-      "text": "Open the Tokenization Lab"
     }
   ]
 }

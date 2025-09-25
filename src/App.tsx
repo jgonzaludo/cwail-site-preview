@@ -7,6 +7,7 @@ import CoursePage from './pages/CoursePage';
 import LabTokenization from './pages/LabTokenization';
 import CelebrationPage from './pages/CelebrationPage';
 import QuizPage from './pages/QuizPage';
+import QuizFinal from './pages/QuizFinal';
 import ResourcesPage from './pages/ResourcesPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
@@ -32,6 +33,7 @@ function App() {
                 </RequireQuizUnlocked>
               } 
             />
+            <Route path="/module/final-quiz" element={<QuizFinal />} />
             <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />

@@ -9,9 +9,10 @@ interface AccordionItem {
 interface AccordionProps {
   items: AccordionItem[];
   className?: string;
+  onOpenItemsChange?: (openItems: Set<number>) => void;
 }
 
-const Accordion: React.FC<AccordionProps> = ({ items, className = '' }) => {
+const Accordion: React.FC<AccordionProps> = ({ items, className = '', onOpenItemsChange }) => {
   const [openItems, setOpenItems] = useState<Set<number>>(new Set());
 
   const toggleItem = (index: number) => {
@@ -22,6 +23,7 @@ const Accordion: React.FC<AccordionProps> = ({ items, className = '' }) => {
       newOpenItems.add(index);
     }
     setOpenItems(newOpenItems);
+    onOpenItemsChange?.(newOpenItems);
   };
 
   return (

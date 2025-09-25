@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { tokenize, type TokenizationResult, type EncodingName } from '../lib/tokenizers';
 import TokenHighlighter from '../components/TokenHighlighter';
+import { RevealOnScroll } from '../components/RevealOnScroll';
 
 const LabTokenization: React.FC = () => {
   const [text, setText] = useState('');
@@ -45,16 +47,22 @@ const LabTokenization: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-8"
+        >
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Tokenization Lab
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
             Explore how text is broken down into tokens by different language models.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <RevealOnScroll>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Input Section */}
           <div className="space-y-6">
             <div>
@@ -187,7 +195,8 @@ const LabTokenization: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
+          </div>
+        </RevealOnScroll>
       </div>
     </div>
   );
