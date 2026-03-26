@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { storage } from '../lib/storage';
 import { setCompleted } from '../lib/progress';
 
 interface NextSectionButtonProps {
@@ -19,15 +18,7 @@ const NextSectionButton: React.FC<NextSectionButtonProps> = ({
   const navigate = useNavigate();
 
   const handleClick = () => {
-    // Mark current section as completed
     setCompleted(currentSectionId, true);
-    
-    // Update progress in localStorage
-    const progress = storage.get('cwail:progress', { completedSections: [] });
-    if (!progress.completedSections.includes(currentSectionId)) {
-      progress.completedSections.push(currentSectionId);
-      storage.set('cwail:progress', progress);
-    }
 
     // Emit custom event for analytics
     window.dispatchEvent(new CustomEvent('cwail:section:completed', {

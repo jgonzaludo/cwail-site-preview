@@ -47,7 +47,7 @@ const SectionNav: React.FC = () => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+    <div className="bg-cwail-elevated/85 backdrop-blur-sm border-b border-cwail-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Section List */}
         <div className="flex flex-wrap gap-2 mb-4">
@@ -60,12 +60,12 @@ const SectionNav: React.FC = () => {
                 disabled={!canAccess}
                 className={`px-3 py-1 text-sm rounded-full transition-colors ${
                   sectionId === section.id
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-cwail-accent2 text-white shadow-cwail dark:shadow-cwail-dark'
                     : isCompleted(section.id)
-                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                    ? 'bg-cwail-accent2/15 text-cwail-accent2 border border-cwail-accent2/25'
                     : canAccess
-                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                    : 'bg-gray-50 dark:bg-gray-900 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                    ? 'bg-cwail-bg/80 text-cwail-muted border border-cwail-border hover:border-cwail-accent2/40'
+                    : 'bg-cwail-bg/40 text-cwail-muted/50 border border-transparent cursor-not-allowed'
                 }`}
               >
                 {section.title}
@@ -79,7 +79,7 @@ const SectionNav: React.FC = () => {
           <button
             onClick={handlePrev}
             disabled={!sectionId || !prevSectionId(sectionId || '') || (sectionId && prevSectionId(sectionId) && !canAccessSection(prevSectionId(sectionId)))}
-            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center px-4 py-2 text-sm font-medium text-cwail-muted bg-cwail-bg/90 border border-cwail-border rounded-lg hover:border-cwail-accent2/50 hover:text-cwail-ink disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Previous
@@ -88,7 +88,7 @@ const SectionNav: React.FC = () => {
           <button
             onClick={handleNext}
             disabled={!sectionId || !nextSectionId(sectionId || '') || (sectionId && nextSectionId(sectionId) && !canAccessSection(nextSectionId(sectionId)))}
-            className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center px-4 py-2 text-sm font-medium text-cwail-muted bg-cwail-bg/90 border border-cwail-border rounded-lg hover:border-cwail-accent2/50 hover:text-cwail-ink disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next
             <ChevronRight className="h-4 w-4 ml-1" />

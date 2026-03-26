@@ -1,4 +1,5 @@
 import { storage } from './storage';
+import { markCompleted } from './progress';
 
 export interface Question {
   id: string;
@@ -112,15 +113,11 @@ export function clearAnswers(): void {
 }
 
 export function updateProgress(): void {
-  const progress = storage.get('cwail:progress', { completedSections: [] });
-  if (!progress.completedSections.includes('final_quiz')) {
-    progress.completedSections.push('final_quiz');
-    storage.set('cwail:progress', progress);
-  }
+  markCompleted('final_quiz');
 }
 
 export function calculateFinalQuizScore(
-  answers: Answer, 
+  answers: Answer,
   questions: Question[]
 ): { score: number; maxScore: number; details: ScoreDetails[] } {
   const details: ScoreDetails[] = [];
@@ -139,32 +136,40 @@ export function calculateFinalQuizScore(
           earned = correct ? 1 : 0;
           break;
 
-        case 'check-all':
+        case 'check-all': {
           const answerArray = Array.isArray(answer) ? answer : [answer];
           const correctArray = question.correct.correctSet || [];
-          // Exact set match required
           const answerSet = new Set(answerArray.sort());
           const correctSet = new Set(correctArray.sort());
-          correct = answerSet.size === correctSet.size && 
-                   [...answerSet].every(val => correctSet.has(val));
+          correct =
+            answerSet.size === correctSet.size && [...answerSet].every(val => correctSet.has(val));
           earned = correct ? 1 : 0;
           break;
+        }
 
-        case 'ordering':
+        case 'ordering': {
           const answerOrder = Array.isArray(answer) ? answer : [answer];
           const correctOrder = question.correct.correctOrder || [];
-          // Exact sequence match required
-          correct = answerOrder.length === correctOrder.length &&
-                   answerOrder.every((val, index) => val === correctOrder[index]);
+          correct =
+            answerOrder.length === correctOrder.length &&
+            answerOrder.every((val, index) => val === correctOrder[index]);
           earned = correct ? 1 : 0;
           break;
+        }
 
-        case 'fill-blank':
-          const answerText = String(answer).toLowerCase().trim().replace(/\s+/g, ' ');
-          const correctText = String(question.correct.text || '').toLowerCase().trim().replace(/\s+/g, ' ');
+        case 'fill-blank': {
+          const answerText = String(answer)
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, ' ');
+          const correctText = String(question.correct.text || '')
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, ' ');
           correct = answerText === correctText;
           earned = correct ? 1 : 0;
           break;
+        }
       }
     }
 

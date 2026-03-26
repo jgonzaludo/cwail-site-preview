@@ -1,23 +1,94 @@
-/* Tailwind CSS directives - these are valid and required */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100;
-  transition: background-color 0.8s ease, color 0.8s ease;
-}
-
-* {
-  transition: background-color 0.8s ease, color 0.8s ease, border-color 0.8s ease;
-}
-
-/* Add to globals.css or tailwind base */
 :root {
+  --font-display: 'Fraunces', 'Georgia', 'Times New Roman', serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+
+  --cwail-bg: #f3f0e8;
+  --cwail-bg-elevated: #faf8f3;
+  --cwail-ink: #15201c;
+  --cwail-muted: #4a5754;
+  --cwail-border: rgba(21, 32, 28, 0.12);
+  --cwail-accent: #c2410c;
+  --cwail-accent-2: #0d5c55;
+  --cwail-glow: rgba(13, 92, 85, 0.14);
+  --cwail-warm: rgba(194, 65, 12, 0.1);
+
+  --cwail-mesh: radial-gradient(ellipse 120% 80% at 10% -20%, var(--cwail-glow) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 70% at 95% 10%, var(--cwail-warm) 0%, transparent 50%),
+    linear-gradient(165deg, #ebe6dc 0%, var(--cwail-bg) 38%, #e8e4da 100%);
   --wavy-overlay-transition: 700ms;
 }
 
-/* smooth crossfade for gradient overlay if class toggle used */
+.dark {
+  --cwail-bg: #0a1010;
+  --cwail-bg-elevated: #121a19;
+  --cwail-ink: #e9e4db;
+  --cwail-muted: #9ca8a4;
+  --cwail-border: rgba(233, 228, 219, 0.12);
+  --cwail-accent: #fb923c;
+  --cwail-accent-2: #5eead4;
+  --cwail-glow: rgba(94, 234, 212, 0.08);
+  --cwail-warm: rgba(251, 146, 60, 0.07);
+
+  --cwail-mesh: radial-gradient(ellipse 100% 60% at 20% 0%, var(--cwail-glow) 0%, transparent 45%),
+    radial-gradient(ellipse 80% 50% at 100% 30%, var(--cwail-warm) 0%, transparent 42%),
+    linear-gradient(170deg, #0a1010 0%, #0f1816 45%, #0a1211 100%);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  font-family: var(--font-body);
+  background-color: var(--cwail-bg);
+  background-image: var(--cwail-mesh);
+  background-attachment: fixed;
+  color: var(--cwail-ink);
+  min-height: 100%;
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .cwail-surface {
+    background-color: var(--cwail-bg-elevated);
+    border: 1px solid var(--cwail-border);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  }
+
+  .cwail-page-enter {
+    animation: cwail-page-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .cwail-stagger-1 {
+    animation-delay: 0.08s;
+  }
+  .cwail-stagger-2 {
+    animation-delay: 0.16s;
+  }
+  .cwail-stagger-3 {
+    animation-delay: 0.24s;
+  }
+}
+
+@keyframes cwail-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 html.dark .wavy-overlay {
   opacity: 1;
 }
@@ -25,10 +96,12 @@ html:not(.dark) .wavy-overlay {
   opacity: 0;
 }
 
-/* respect reduced motion for all animations */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }

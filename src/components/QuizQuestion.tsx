@@ -39,6 +39,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     return Array.from({ length: question.choices.length }, (_, i) => i);
   });
 
+
   const moveItem = (index: number, direction: 'up' | 'down') => {
     if (question.type !== 'ordering') return;
     
@@ -184,10 +185,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
         {showResults && result && (
           <div className="flex items-center space-x-2">
             <span className={`text-sm font-medium ${getResultTextColor()}`}>
-              {result.correct ? '✓ Correct' : '✗ Incorrect'}
-            </span>
-            <span className={`text-sm font-medium ${getResultTextColor()}`}>
-              ({result.earned}/{result.maxPoints} points)
+              ({result.earned}/{result.maxPoints})
             </span>
           </div>
         )}

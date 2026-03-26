@@ -43,6 +43,7 @@ const QuizFinal: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   useEffect(() => {
     initializeQuiz();
@@ -50,20 +51,14 @@ const QuizFinal: React.FC = () => {
 
   const initializeQuiz = () => {
     try {
-      console.log('Initializing quiz with', finalQuiz.length, 'questions');
-      console.log('Quiz questions:', finalQuiz.map(q => ({ id: q.id, type: q.type, prompt: q.prompt.substring(0, 50) + '...' })));
-      
-      // Check if we have a current attempt in progress
       const existingAnswers = getAnswers();
       const latestScore = getScore();
-      
+
       if (Object.keys(existingAnswers).length > 0 && !latestScore) {
-        // Resume existing attempt
         setAnswers(existingAnswers);
-        setQuestions(finalQuiz); // Use original order for resumed attempts
+        setQuestions(finalQuiz);
         setCurrentAttemptId(generateAttemptId());
       } else {
-        // Start new attempt
         const randomizedQuestions = randomizeQuestionOrder(finalQuiz);
         const newAttemptId = generateAttemptId();
         const questionOrder = randomizedQuestions.map(q => q.id);
@@ -71,11 +66,11 @@ const QuizFinal: React.FC = () => {
         setQuestions(randomizedQuestions);
         setCurrentAttemptId(newAttemptId);
         setAnswers({});
+        clearAnswers();
         
         // Save the order for this attempt
         saveAttemptOrder(newAttemptId, questionOrder);
         saveLatestOrder(questionOrder);
-        clearAnswers();
       }
       
       // Load existing data
@@ -85,6 +80,7 @@ const QuizFinal: React.FC = () => {
       
     } catch (error) {
       console.error('Failed to initialize quiz:', error);
+      setToastType('error');
       setToastMessage('Failed to load quiz. Please refresh the page.');
       setShowToast(true);
     } finally {
@@ -103,6 +99,7 @@ const QuizFinal: React.FC = () => {
     const unansweredQuestions = questions.filter(q => answers[q.id] === undefined || answers[q.id] === '');
     
     if (unansweredQuestions.length > 0) {
+      setToastType('error');
       setToastMessage(`Please answer all questions. ${unansweredQuestions.length} questions remain unanswered.`);
       setShowToast(true);
       return;
@@ -141,14 +138,16 @@ const QuizFinal: React.FC = () => {
         setCertificateEligible(true);
         updateProgress();
       }
-      
+
       setScore(scoreRecord);
       setSubmitted(true);
+      setToastType('success');
       setToastMessage(passed ? 'Quiz completed successfully!' : 'Quiz completed. You can retake it to improve your score.');
       setShowToast(true);
       
     } catch (error) {
       console.error('Failed to submit quiz:', error);
+      setToastType('error');
       setToastMessage('Failed to submit quiz. Please try again.');
       setShowToast(true);
     } finally {
@@ -173,6 +172,7 @@ const QuizFinal: React.FC = () => {
     saveLatestOrder(questionOrder);
     clearAnswers();
     
+    setToastType('success');
     setToastMessage('New quiz attempt started. Good luck!');
     setShowToast(true);
   };
@@ -185,7 +185,7 @@ const QuizFinal: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen">
         <SectionNav />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center h-64">
@@ -197,13 +197,13 @@ const QuizFinal: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen">
       <SectionNav />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+        <div className="cwail-surface rounded-xl shadow-cwail dark:shadow-cwail-dark p-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <h1 className="text-3xl font-display font-bold text-cwail-ink mb-2">
               CWAIL Final Quiz
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
@@ -274,7 +274,7 @@ const QuizFinal: React.FC = () => {
       {showToast && (
         <Toast
           message={toastMessage}
-          type="success"
+          type={toastType}
           onClose={() => setShowToast(false)}
         />
       )}

@@ -454,28 +454,35 @@ const CoursePage: React.FC = () => {
     
     return (
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6">
+        <h1 className="text-3xl md:text-4xl font-display font-bold text-cwail-ink mb-6">
           {section.title}
         </h1>
         
         {/* Lead summary card */}
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        <div className="cwail-surface rounded-xl p-6 mb-8 shadow-cwail dark:shadow-cwail-dark">
+          <h2 className="text-xl font-display font-semibold text-cwail-ink mb-4">
             Overview
           </h2>
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
-            {section.lead}
-          </p>
+          {section.lead.includes('<a ') ? (
+            <div
+              className="text-[var(--cwail-muted)] leading-relaxed mb-4 [&_a.cwail-inline-link]:text-[var(--cwail-accent-2)] [&_a.cwail-inline-link]:font-medium [&_a.cwail-inline-link]:underline [&_a.cwail-inline-link]:underline-offset-2 [&_a.cwail-inline-link]:decoration-[var(--cwail-accent)] hover:[&_a.cwail-inline-link]:text-[var(--cwail-accent)]"
+              dangerouslySetInnerHTML={{ __html: section.lead }}
+            />
+          ) : (
+            <p className="text-[var(--cwail-muted)] leading-relaxed mb-4">{section.lead}</p>
+          )}
           
           {section.keyTakeaways && section.keyTakeaways.length > 0 && (
             <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-3">
+              <h3 className="text-lg font-display font-medium text-cwail-ink mb-3">
                 Key Takeaways
               </h3>
               <ul className="space-y-2">
                 {section.keyTakeaways.map((takeaway, index) => (
-                  <li key={index} className="flex items-start space-x-2 text-gray-700 dark:text-gray-300">
-                    <span className="text-blue-600 dark:text-blue-400 mt-1">•</span>
+                  <li key={index} className="flex items-start gap-2 text-cwail-muted">
+                    <span className="text-cwail-accent mt-0.5 font-bold" aria-hidden>
+                      •
+                    </span>
                     <span>{takeaway}</span>
                   </li>
                 ))}
@@ -485,7 +492,7 @@ const CoursePage: React.FC = () => {
         </div>
 
         {/* Visual separator */}
-        <hr className="border-gray-200 dark:border-gray-600 mb-6" />
+        <hr className="border-cwail-border mb-6" />
 
         {/* Accordions */}
         {section.sections.length > 0 ? (
@@ -643,13 +650,15 @@ const CoursePage: React.FC = () => {
           )}
         </div>
 
-        {/* Submit button */}
-        <button
-          onClick={handleConclusionSubmit}
-          className="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-lg"
-        >
-          Submit Response
-        </button>
+        {/* Action buttons */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={handleConclusionSubmit}
+            className="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-lg"
+          >
+            Submit Response
+          </button>
+        </div>
       </div>
     );
   };

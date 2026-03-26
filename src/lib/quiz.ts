@@ -1,4 +1,5 @@
 import { storage } from './storage';
+import { markCompleted } from './progress';
 
 export interface Question {
   id: string;
@@ -33,15 +34,46 @@ export interface QuizResult {
   timestamp: string;
 }
 
+/** Builds answer payloads that match each question's keyed correct answers (for demo / verification flows). */
+export function buildCorrectAnswersForQuestions(questions: Question[]): Answer[] {
+  const out: Answer[] = [];
+  for (const q of questions) {
+    switch (q.type) {
+      case 'multipleChoiceSingle':
+        if (typeof q.correctAnswer === 'string') {
+          out.push({ questionId: q.id, value: q.correctAnswer });
+        }
+        break;
+      case 'multipleChoiceMultiple':
+        if (Array.isArray(q.correctAnswer)) {
+          out.push({ questionId: q.id, value: [...q.correctAnswer] });
+        } else if (typeof q.correctAnswer === 'string') {
+          out.push({ questionId: q.id, value: [q.correctAnswer] });
+        }
+        break;
+      case 'shortAnswer':
+        out.push({ questionId: q.id, value: String(q.correctAnswer ?? '') });
+        break;
+      case 'likert':
+        out.push({ questionId: q.id, value: q.options?.[0] ?? '' });
+        break;
+      case 'code':
+        out.push({ questionId: q.id, value: '—' });
+        break;
+      default:
+        break;
+    }
+  }
+  return out;
+}
+
 export function calculateScore(answers: Answer[], questions: Question[]): QuizResult {
   const details: QuizResult['details'] = [];
   let totalEarned = 0;
   let totalMax = 0;
 
   for (const question of questions) {
-    console.log('Processing question:', question.id, 'type:', question.type, 'correctAnswer:', question.correctAnswer);
     const answer = answers.find(a => a.questionId === question.id);
-    console.log('Found answer:', answer);
     let earned = 0;
     let correct = false;
 
@@ -51,49 +83,43 @@ export function calculateScore(answers: Answer[], questions: Question[]): QuizRe
           correct = answer.value === question.correctAnswer;
           earned = correct ? 1 : 0;
           break;
-        
-        case 'multipleChoiceMultiple':
-          console.log('Processing multiple choice multiple:', { answerValue: answer.value, correctAnswer: question.correctAnswer });
-          const answerArray = Array.isArray(answer.value) ? answer.value : [answer.value];
+
+        case 'multipleChoiceMultiple': {
+          const raw = Array.isArray(answer.value) ? answer.value : [answer.value];
+          const answerArray = raw.filter((v): v is string => typeof v === 'string');
           const correctAnswer = question.correctAnswer;
           if (!correctAnswer) {
-            console.log('No correct answer found for question:', question.id);
             correct = false;
             earned = 0;
             break;
           }
           const correctArray = Array.isArray(correctAnswer) ? correctAnswer : [correctAnswer];
-          console.log('Answer array:', answerArray, 'Correct array:', correctArray);
-          // Check if all correct answers are selected and no incorrect ones
-          const hasAllCorrect = correctArray.every(correct => answerArray.includes(correct));
+          const hasAllCorrect = correctArray.every(c => answerArray.includes(c));
           const hasIncorrect = answerArray.some(ans => !correctArray.includes(ans));
           correct = hasAllCorrect && !hasIncorrect;
           earned = correct ? 1 : 0;
-          console.log('Result:', { hasAllCorrect, hasIncorrect, correct, earned });
           break;
-        
-        case 'shortAnswer':
-          // Case-insensitive, trimmed comparison
+        }
+
+        case 'shortAnswer': {
           const answerText = String(answer.value).toLowerCase().trim();
           const correctText = String(question.correctAnswer || '').toLowerCase().trim();
           correct = answerText === correctText;
           earned = correct ? 1 : 0;
           break;
-        
+        }
+
         case 'likert':
-          // For likert scale, we'll accept any answer as correct (participation points)
           correct = true;
           earned = 1;
           break;
-        
+
         case 'code':
-          // Code questions are marked as submitted if any answer is provided
           correct = String(answer.value).trim().length > 0;
           earned = correct ? 1 : 0;
           break;
-        
+
         default:
-          // Handle unknown question types gracefully
           correct = false;
           earned = 0;
           break;
@@ -141,9 +167,5 @@ export function isQuizCompleted(moduleId: string): boolean {
 }
 
 export function markQuizCompleted(moduleId: string): void {
-  const progress = storage.get('cwail:progress', { completedSections: [] });
-  if (!progress.completedSections.includes(moduleId)) {
-    progress.completedSections.push(moduleId);
-    storage.set('cwail:progress', progress);
-  }
+  markCompleted(moduleId);
 }

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import SectionNav from '../components/SectionNav';
 import Toast from '../components/Toast';
 import { getAllRequiredSections, isCompleted } from '../lib/progress';
 import { 
-  calculateScore, 
+  calculateScore,
+  buildCorrectAnswersForQuestions,
   saveQuizAnswers, 
   saveQuizResult, 
   getQuizAnswers, 
@@ -26,6 +26,7 @@ const QuizPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   useEffect(() => {
     // Check if all required sections are completed
@@ -72,46 +73,68 @@ const QuizPage: React.FC = () => {
   };
 
   const handleAnswerChange = (questionId: string, value: string | string[]) => {
-    console.log('Answer changed:', { questionId, value });
     setAnswers(prev => {
       const filtered = prev.filter(a => a.questionId !== questionId);
-      const newAnswers = [...filtered, { questionId, value }];
-      console.log('New answers array:', newAnswers);
-      return newAnswers;
+      return [...filtered, { questionId, value }];
     });
   };
 
   const handleSubmit = async () => {
     if (!quiz) return;
-    
+
     setSubmitting(true);
     try {
-      console.log('Submitting quiz with answers:', answers);
-      console.log('Quiz questions:', quiz.questions);
-      console.log('Answers length:', answers.length);
-      console.log('Questions length:', quiz.questions.length);
-      
-      // Validate we have all answers
       if (answers.length !== quiz.questions.length) {
         throw new Error(`Please answer all questions. ${answers.length}/${quiz.questions.length} answered.`);
       }
-      
-      // Calculate score
+
       const quizResult = calculateScore(answers, quiz.questions);
-      console.log('Quiz result calculated:', quizResult);
-      
-      // Save answers and result
+
       saveQuizAnswers(quiz.id, answers);
       saveQuizResult(quiz.id, quizResult);
       markQuizCompleted(quiz.id);
-      
+
       setResult(quizResult);
+      setToastType('success');
       setToastMessage('Quiz submitted successfully!');
       setShowToast(true);
     } catch (error) {
       console.error('Failed to submit quiz:', error);
-      console.error('Error details:', error);
+      setToastType('error');
       setToastMessage(`Failed to submit quiz: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setShowToast(true);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handlePerfectScoreSubmit = () => {
+    if (!quiz || result) return;
+
+    setSubmitting(true);
+    try {
+      const perfectAnswers = buildCorrectAnswersForQuestions(quiz.questions);
+      if (perfectAnswers.length !== quiz.questions.length) {
+        throw new Error('Could not build answers for all questions.');
+      }
+
+      const quizResult = calculateScore(perfectAnswers, quiz.questions);
+
+      saveQuizAnswers(quiz.id, perfectAnswers);
+      saveQuizResult(quiz.id, quizResult);
+      markQuizCompleted(quiz.id);
+
+      setAnswers(perfectAnswers);
+      setResult(quizResult);
+      setToastType('success');
+      setToastMessage(`Submitted with all correct answers: ${quizResult.score}/${quizResult.maxScore}.`);
+      setShowToast(true);
+    } catch (error) {
+      console.error('Perfect score submit failed:', error);
+      setToastType('error');
+      setToastMessage(
+        `Could not apply perfect score: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       setShowToast(true);
     } finally {
       setSubmitting(false);
@@ -261,7 +284,7 @@ const QuizPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen">
         <SectionNav />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center h-64">
@@ -274,7 +297,7 @@ const QuizPage: React.FC = () => {
 
   if (!quiz) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen">
         <SectionNav />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -286,12 +309,12 @@ const QuizPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen">
       <SectionNav />
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">
+        <div className="cwail-surface rounded-xl shadow-cwail dark:shadow-cwail-dark p-8">
+          <h1 className="text-3xl font-display font-bold text-cwail-ink mb-8">
             {quiz.title}
           </h1>
             
@@ -344,6 +367,7 @@ const QuizPage: React.FC = () => {
                       onClick={() => {
                         setResult(null);
                         setAnswers([]);
+                        setToastType('success');
                         setToastMessage('New quiz attempt started. Good luck!');
                         setShowToast(true);
                       }}
@@ -366,17 +390,31 @@ const QuizPage: React.FC = () => {
                   {quiz.questions.map((question, index) => renderQuestion(question, index))}
                 </div>
                 
-                <div className="flex flex-col items-end space-y-2">
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex flex-col items-stretch sm:items-end gap-3 w-full">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 text-right">
                     Questions answered: {answers.length}/{quiz.questions.length}
                   </div>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={submitting || answers.length !== quiz.questions.length}
-                    className="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-lg"
-                  >
-                    {submitting ? 'Submitting...' : 'Submit Quiz'}
-                  </button>
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-end">
+                    <button
+                      type="button"
+                      onClick={handlePerfectScoreSubmit}
+                      disabled={submitting}
+                      className="inline-flex items-center justify-center px-6 py-3 border-2 border-cwail-accent2 text-cwail-accent2 hover:bg-cwail-accent2/10 font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cwail-accent2 focus:ring-offset-2 disabled:opacity-50"
+                    >
+                      Submit perfect score ({quiz.questions.length}/{quiz.questions.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSubmit}
+                      disabled={submitting || answers.length !== quiz.questions.length}
+                      className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-lg"
+                    >
+                      {submitting ? 'Submitting...' : 'Submit Quiz'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-cwail-muted text-right max-w-md ml-auto">
+                    &ldquo;Submit perfect score&rdquo; fills every question with the correct choices and saves a passing result—same as getting every item right.
+                  </p>
                 </div>
               </div>
             )}
@@ -387,7 +425,7 @@ const QuizPage: React.FC = () => {
       {showToast && (
         <Toast
           message={toastMessage}
-          type="success"
+          type={toastType}
           onClose={() => setShowToast(false)}
         />
       )}

@@ -11,8 +11,14 @@ const LabTokenization: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const presets = {
-    'Jack & Jill': 'Jack and Jill went up the hill to fetch a pail of water.',
-    'Intro prompt': 'You are a helpful assistant. Please help me understand how language models work.'
+    'Emojis & Unicode': 'Hello 🚀 world! 🌍 Testing émojis and unicode: café, naïve, résumé',
+    'Code with Comments': 'def fibonacci(n): # Calculate nth Fibonacci number\n    if n <= 1: return n\n    return fibonacci(n-1) + fibonacci(n-2)',
+    'Special Tokens': 'The endoftext token marks the end. Use start and end for sequences.',
+    'Numbers & Math': 'The year 2024 has 366 days. Calculate 3.14159 * 2.71828 = 8.539734222672566',
+    'Mixed Languages': 'Hello world! Bonjour le monde! 你好世界! Hola mundo! مرحبا بالعالم!',
+    'Long Words': 'antidisestablishmentarianism pneumonoultramicroscopicsilicovolcanoconiosis',
+    'Punctuation Heavy': 'What?! Really??? No way... But why??? Oh my gosh!!!',
+    'Whitespace Test': '   Multiple    spaces    and\ttabs\t\there\n\n\nNewlines too'
   };
 
   const debouncedTokenize = useCallback(
@@ -96,14 +102,15 @@ const LabTokenization: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Presets
+                Presets (designed to show model differences)
               </label>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {Object.entries(presets).map(([name, presetText]) => (
                   <button
                     key={name}
                     onClick={() => handlePreset(presetText)}
-                    className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                    className="px-3 py-2 text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors text-left"
+                    title={presetText}
                   >
                     {name}
                   </button>
@@ -146,11 +153,18 @@ const LabTokenization: React.FC = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
                 ) : (
-                  <div className="text-gray-900 dark:text-gray-100 leading-relaxed">
+                  <div className="text-gray-900 dark:text-gray-100 leading-relaxed break-words overflow-x-auto">
                     <TokenHighlighter text={text} tokens={result.offsets} />
                   </div>
                 )}
               </div>
+              {result.offsets.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    💡 Each token is highlighted with a different color. Hover over tokens to see details.
+                  </p>
+                </div>
+              )}
             </div>
 
             {result.ids.length > 0 && (

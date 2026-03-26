@@ -13,8 +13,14 @@ const TokenLabEmbed: React.FC<TokenLabEmbedProps> = ({ className = '' }) => {
   const [loading, setLoading] = useState(false);
 
   const presets = {
-    'Jack & Jill': 'Jack and Jill went up the hill to fetch a pail of water.',
-    'Intro prompt': 'You are a helpful assistant. Please help me understand how language models work.'
+    'Emojis & Unicode': 'Hello 🚀 world! 🌍 Testing émojis and unicode: café, naïve, résumé',
+    'Code with Comments': 'def fibonacci(n): # Calculate nth Fibonacci number\n    if n <= 1: return n\n    return fibonacci(n-1) + fibonacci(n-2)',
+    'Special Tokens': 'The endoftext token marks the end. Use start and end for sequences.',
+    'Numbers & Math': 'The year 2024 has 366 days. Calculate 3.14159 * 2.71828 = 8.539734222672566',
+    'Mixed Languages': 'Hello world! Bonjour le monde! 你好世界! Hola mundo! مرحبا بالعالم!',
+    'Long Words': 'antidisestablishmentarianism pneumonoultramicroscopicsilicovolcanoconiosis',
+    'Punctuation Heavy': 'What?! Really??? No way... But why??? Oh my gosh!!!',
+    'Whitespace Test': '   Multiple    spaces    and\ttabs\t\there\n\n\nNewlines too'
   };
 
   const debouncedTokenize = useCallback(
@@ -52,7 +58,11 @@ const TokenLabEmbed: React.FC<TokenLabEmbedProps> = ({ className = '' }) => {
         Token Workshop
       </h3>
       <p className="text-gray-600 dark:text-gray-400 mb-6">
-        Explore how text is broken down into tokens by different language models.
+        Explore how text is broken down into tokens by different language models. 
+        <span className="text-sm text-gray-500 dark:text-gray-500 block mt-1">
+          GPT-2 uses BPE (Byte Pair Encoding) while GPT-4 uses CL100K Base encoding, 
+          resulting in different tokenization patterns for the same text.
+        </span>
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -87,22 +97,23 @@ const TokenLabEmbed: React.FC<TokenLabEmbedProps> = ({ className = '' }) => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Presets
-            </label>
-            <div className="flex gap-2">
-              {Object.entries(presets).map(([name, presetText]) => (
-                <button
-                  key={name}
-                  onClick={() => handlePreset(presetText)}
-                  className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                >
-                  {name}
-                </button>
-              ))}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Presets (designed to show model differences)
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(presets).map(([name, presetText]) => (
+                  <button
+                    key={name}
+                    onClick={() => handlePreset(presetText)}
+                    className="px-3 py-2 text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors text-left"
+                    title={presetText}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
         </div>
 
         {/* Output Section */}
@@ -112,6 +123,12 @@ const TokenLabEmbed: React.FC<TokenLabEmbedProps> = ({ className = '' }) => {
               Statistics
             </h4>
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+              <div className="mb-3">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Model</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {encoding === 'gpt2' ? 'GPT-2 (BPE)' : 'GPT-4 (CL100K Base)'}
+                </p>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Characters</p>
@@ -126,6 +143,13 @@ const TokenLabEmbed: React.FC<TokenLabEmbedProps> = ({ className = '' }) => {
                   </p>
                 </div>
               </div>
+              {result.ids.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Ratio: {text.length > 0 ? (result.ids.length / text.length).toFixed(2) : '0.00'} tokens per character
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -139,11 +163,18 @@ const TokenLabEmbed: React.FC<TokenLabEmbedProps> = ({ className = '' }) => {
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                 </div>
               ) : (
-                <div className="text-gray-900 dark:text-gray-100 leading-relaxed">
+                <div className="text-gray-900 dark:text-gray-100 leading-relaxed break-words overflow-x-auto">
                   <TokenHighlighter text={text} tokens={result.offsets} />
                 </div>
               )}
             </div>
+            {result.offsets.length > 0 && (
+              <div className="mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  💡 Each token is highlighted with a different color. Hover over tokens to see details.
+                </p>
+              </div>
+            )}
           </div>
 
           {result.ids.length > 0 && (
