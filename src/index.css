@@ -23,19 +23,20 @@
 }
 
 .dark {
-  --cwail-bg: #0a1010;
-  --cwail-bg-elevated: #121a19;
-  --cwail-ink: #e9e4db;
-  --cwail-muted: #9ca8a4;
-  --cwail-border: rgba(233, 228, 219, 0.12);
+  /* Neutral charcoal — true grey, no green or blue cast */
+  --cwail-bg: #0a0a0a;
+  --cwail-bg-elevated: #141414;
+  --cwail-ink: #f0f0f0;
+  --cwail-muted: #a3a3a3;
+  --cwail-border: rgba(255, 255, 255, 0.09);
   --cwail-accent: #fb923c;
-  --cwail-accent-2: #5eead4;
-  --cwail-glow: rgba(94, 234, 212, 0.08);
-  --cwail-warm: rgba(251, 146, 60, 0.07);
+  --cwail-accent-2: #a8a8a8;
+  --cwail-glow: rgba(255, 255, 255, 0.04);
+  --cwail-warm: rgba(251, 146, 60, 0.06);
 
-  --cwail-mesh: radial-gradient(ellipse 100% 60% at 20% 0%, var(--cwail-glow) 0%, transparent 45%),
-    radial-gradient(ellipse 80% 50% at 100% 30%, var(--cwail-warm) 0%, transparent 42%),
-    linear-gradient(170deg, #0a1010 0%, #0f1816 45%, #0a1211 100%);
+  --cwail-mesh: radial-gradient(ellipse 110% 70% at 20% -10%, var(--cwail-glow) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 50% at 100% 20%, var(--cwail-warm) 0%, transparent 46%),
+    linear-gradient(180deg, #0a0a0a 0%, #101010 45%, #0d0d0d 100%);
 }
 
 html {
