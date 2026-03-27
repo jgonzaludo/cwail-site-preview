@@ -39,7 +39,9 @@ const HomePage: React.FC = () => {
               transition={{ duration: 0.55, delay: 0.28 }}
               className="mt-5 font-display text-3xl md:text-5xl lg:text-6xl font-semibold leading-tight max-w-4xl mx-auto"
             >
-              AI is here. We all use it. Let&apos;s use it well.
+              AI is here. We all use it.
+              <br />
+              <span className="inline-block whitespace-nowrap">Let&apos;s use it well.</span>
             </motion.h1>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
