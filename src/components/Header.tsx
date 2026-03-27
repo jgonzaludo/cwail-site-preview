@@ -29,9 +29,9 @@ const Header: React.FC = () => {
     'text-cwail-muted hover:text-cwail-accent2 dark:hover:text-cwail-accent px-3 py-2 text-sm font-medium transition-colors rounded-md';
 
   return (
-    <header className="w-full border-b border-cwail-border bg-cwail-elevated/80 backdrop-blur-md py-3 px-4 sm:px-6">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        <div className="flex items-center min-w-0">
+    <header className="w-full border-b border-cwail-border bg-cwail-elevated/80 backdrop-blur-md">
+      <div className="relative flex w-full items-center justify-between gap-4 py-3 px-4 sm:px-6 lg:px-8 min-h-[3.25rem]">
+        <div className="relative z-10 flex min-w-0 shrink-0 items-center">
           <Link
             to="/"
             className="flex items-center gap-2 px-3 py-2 rounded-lg border border-cwail-border bg-cwail-bg/60 hover:border-cwail-accent2/40 transition-colors"
@@ -49,7 +49,10 @@ const Header: React.FC = () => {
           </Link>
         </div>
 
-        <nav className="hidden md:flex items-center gap-1 mx-auto">
+        <nav
+          className="absolute left-1/2 top-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-1 md:flex"
+          aria-label="Main navigation"
+        >
           <Link to="/" className={linkClass}>
             Home
           </Link>
@@ -70,7 +73,7 @@ const Header: React.FC = () => {
           </Link>
         </nav>
 
-        <div className="flex items-center shrink-0">
+        <div className="relative z-10 flex shrink-0 items-center">
           <button
             onClick={() => setDarkMode((prev) => !prev)}
             className="p-2 rounded-full border border-cwail-border bg-cwail-bg/50 hover:border-cwail-accent2/50 transition-colors"
@@ -95,8 +98,8 @@ const Header: React.FC = () => {
       </div>
 
       {isMobileMenuOpen && (
-        <nav className="md:hidden border-t border-cwail-border mt-3 pt-3 pb-2">
-          <div className="max-w-7xl mx-auto flex flex-col gap-1 px-2">
+        <nav className="border-t border-cwail-border px-4 pb-2 pt-3 sm:px-6 lg:px-8 md:hidden">
+          <div className="flex flex-col gap-1">
             {[
               ['/', 'Home'],
               ['/course/introduction', 'Course'],
