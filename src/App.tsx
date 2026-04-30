@@ -10,9 +10,11 @@ import CelebrationPage from './pages/CelebrationPage';
 import QuizPage from './pages/QuizPage';
 import QuizFinal from './pages/QuizFinal';
 import ResourcesPage from './pages/ResourcesPage';
+import CitingAIPage from './pages/CitingAIPage';
+import ResponsibleAIPage from './pages/ResponsibleAIPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
-import { RequireAllRequired, RequireQuizUnlocked, getRedirectPath } from './lib/guards';
+import { RequireQuizUnlocked } from './lib/guards';
 
 function App() {
   return (
@@ -41,6 +43,8 @@ function App() {
             />
             <Route path="/module/final-quiz" element={<QuizFinal />} />
             <Route path="/resources" element={<ResourcesPage />} />
+            <Route path="/resources/citing-ai" element={<CitingAIPage />} />
+            <Route path="/resources/responsible-ai" element={<ResponsibleAIPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
           </Routes>

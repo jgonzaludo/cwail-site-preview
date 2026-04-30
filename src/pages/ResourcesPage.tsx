@@ -1,32 +1,36 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FileText, Download } from 'lucide-react';
+import { ArrowRight, BookOpen, FileText, MessageSquareText } from 'lucide-react';
 import { RevealOnScroll } from '../components/RevealOnScroll';
 
 const ResourcesPage: React.FC = () => {
   const resources = [
     {
-      id: 1,
-      title: "AI Citation/Attribution PDF",
-      description: "Guidelines for properly citing AI-generated content",
-      format: "PDF"
+      title: 'Citing/Attributing AI Tools',
+      description: 'Citation formats and examples for APA, MLA, Chicago/Turabian, and IEEE.',
+      eyebrow: 'Citation guide',
+      to: '/resources/citing-ai',
+      icon: FileText,
     },
     {
-      id: 2,
-      title: "Responsible AI Templates",
-      description: "Templates for ethical AI use in writing",
-      format: "DOCX"
+      title: 'Responsible AI Templates',
+      description: 'Prompt templates for writing support, source work, revision, and clerical tasks.',
+      eyebrow: 'Prompt library',
+      to: '/resources/responsible-ai',
+      icon: MessageSquareText,
     },
     {
-      id: 3,
-      title: "Instructor Notes",
-      description: "[TK] Instructor notes and guidance",
-      format: "PDF"
+      title: 'Course Module',
+      description: 'Return to the core CWAIL module sequence and the Using AI Wisely section.',
+      eyebrow: 'Module reference',
+      to: '/course/using-ai-wisely',
+      icon: BookOpen,
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
+    <div className="min-h-screen bg-cwail-bg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -34,36 +38,40 @@ const ResourcesPage: React.FC = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            [TK] Resources Title
+          <h1 className="text-4xl md:text-5xl font-display font-bold text-cwail-ink mb-4">
+            Additional Resources
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Downloadable resources and materials for classroom use
+          <p className="text-xl text-cwail-muted max-w-3xl mx-auto">
+            Reference pages for AI citation, responsible prompting, and course context.
           </p>
         </motion.div>
 
         <RevealOnScroll>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {resources.map((resource) => (
-            <div key={resource.id} className="bg-white dark:bg-gray-900 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-gray-100 dark:border-gray-800">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-orange-900 rounded-lg">
-                    <FileText className="h-5 w-5 text-blue-600 dark:text-orange-400" />
+            {resources.map((resource) => {
+              const Icon = resource.icon;
+              return (
+                <Link
+                  key={resource.title}
+                  to={resource.to}
+                  className="group cwail-surface rounded-xl p-6 shadow-cwail dark:shadow-cwail-dark transition-all duration-200 hover:-translate-y-1 hover:scale-[1.02] hover:border-cwail-accent2/50 hover:bg-cwail-elevated/90 focus:outline-none focus:ring-2 focus:ring-cwail-accent2 focus:ring-offset-2 focus:ring-offset-cwail-bg"
+                >
+                  <div className="flex items-start justify-between gap-4 mb-5">
+                    <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-cwail-accent2/10 text-cwail-accent2 group-hover:bg-cwail-accent2 group-hover:text-white transition-colors">
+                      <Icon className="h-5 w-5" aria-hidden />
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-cwail-muted transition-transform group-hover:translate-x-1 group-hover:text-cwail-accent2" aria-hidden />
                   </div>
-                  <span className="text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-2 py-1 rounded-full">
-                    {resource.format}
-                  </span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{resource.title}</h3>
-                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">{resource.description}</p>
-                <button className="flex items-center text-blue-600 dark:text-orange-400 hover:text-blue-700 dark:hover:text-orange-300 font-medium">
-                  <Download className="h-4 w-4 mr-1" />
-                  Download
-                </button>
-              </div>
-            </div>
-          ))}
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cwail-accent mb-3">
+                    {resource.eyebrow}
+                  </p>
+                  <h2 className="text-xl font-display font-semibold text-cwail-ink mb-2">
+                    {resource.title}
+                  </h2>
+                  <p className="text-cwail-muted text-sm leading-relaxed">{resource.description}</p>
+                </Link>
+              );
+            })}
           </div>
         </RevealOnScroll>
       </div>
