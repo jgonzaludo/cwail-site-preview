@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, BookOpen, FileText, MessageSquareText } from 'lucide-react';
+import { ArrowRight, ClipboardList, FileText, MessageSquareText } from 'lucide-react';
 import { RevealOnScroll } from '../components/RevealOnScroll';
 
 const ResourcesPage: React.FC = () => {
@@ -69,28 +69,22 @@ const ResourcesPage: React.FC = () => {
               className="cwail-surface rounded-xl p-6 shadow-cwail dark:shadow-cwail-dark opacity-75 border border-dashed border-cwail-border"
               aria-disabled="true"
             >
-              <div className="flex items-start justify-between gap-4 mb-5">
+              <div className="flex items-start justify-between gap-4 mb-4">
                 <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-cwail-muted/15 text-cwail-muted">
-                  <BookOpen className="h-5 w-5" aria-hidden />
+                  <ClipboardList className="h-5 w-5" aria-hidden />
                 </div>
                 <button
                   type="button"
                   disabled
                   className="pointer-events-none shrink-0 rounded-lg border border-cwail-border bg-cwail-bg px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-cwail-muted cursor-not-allowed"
-                  aria-label="Course module reference (in progress)"
+                  aria-label="Instructor notes (in progress)"
                 >
                   IN PROGRESS
                 </button>
               </div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cwail-accent mb-3">
-                Module reference
-              </p>
-              <h2 className="text-xl font-display font-semibold text-cwail-ink mb-2">
-                Course Module
+              <h2 className="text-xl font-display font-semibold text-cwail-ink">
+                Instructor Notes
               </h2>
-              <p className="text-cwail-muted text-sm leading-relaxed">
-                Return to the core CWAIL module sequence and the Using AI Wisely section.
-              </p>
             </div>
           </div>
         </RevealOnScroll>
