@@ -5,6 +5,11 @@
 :root {
   --font-display: 'Fraunces', 'Georgia', 'Times New Roman', serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-cert-serif: 'Lora', 'Georgia', 'Times New Roman', serif;
+  --font-cert-sans: 'Inter', system-ui, sans-serif;
+  --academy-cream: #f2f0e9;
+  --academy-forest: #0f2922;
+  --academy-orange: #f89b4e;
 
   --cwail-bg: #f3f0e8;
   --cwail-bg-elevated: #faf8f3;
@@ -105,5 +110,104 @@ html:not(.dark) .wavy-overlay {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .cert-page-root {
+    background: var(--academy-cream) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .cert-surface {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  .cert-inner {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+.verify-page {
+  background-color: var(--academy-cream);
+  color: var(--academy-forest);
+}
+
+.verify-hero-title {
+  color: var(--academy-forest);
+}
+
+.verify-muted {
+  color: #4a5754;
+}
+
+.verify-card {
+  border-color: rgba(15, 41, 34, 0.12);
+  background: #faf8f3;
+}
+
+.verify-card-head {
+  background: linear-gradient(
+    145deg,
+    var(--academy-forest) 0%,
+    #1a4d3f 50%,
+    var(--academy-forest) 100%
+  );
+}
+
+.verify-card-body {
+  background: #faf8f3;
+  color: var(--academy-forest);
+}
+
+.verify-label {
+  color: #4a5754;
+}
+
+.verify-value {
+  color: var(--academy-forest);
+}
+
+@media (prefers-color-scheme: dark) {
+  .verify-page {
+    background: linear-gradient(165deg, #050807 0%, var(--academy-forest) 45%, #0a0a0a 100%);
+    color: var(--academy-cream);
+  }
+
+  .verify-hero-title {
+    color: var(--academy-cream);
+  }
+
+  .verify-muted {
+    color: #a3a3a3;
+  }
+
+  .verify-card {
+    border-color: rgba(255, 255, 255, 0.09);
+    background: #141414;
+  }
+
+  .verify-card-head {
+    background: linear-gradient(145deg, #0a1815 0%, var(--academy-forest) 40%, #050807 100%);
+  }
+
+  .verify-card-body {
+    background: #141414;
+    color: var(--academy-cream);
+  }
+
+  .verify-label {
+    color: #a3a3a3;
+  }
+
+  .verify-value {
+    color: var(--academy-cream);
   }
 }

@@ -7,6 +7,9 @@ export default {
       fontFamily: {
         display: ['Fraunces', 'Georgia', 'Times New Roman', 'serif'],
         sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        /** CWAIL Academy — certificate & branded accents (Lora / Inter loaded in index.html) */
+        'cert-serif': ['Lora', 'Georgia', 'Times New Roman', 'serif'],
+        'cert-sans': ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
         cwail: {
@@ -17,6 +20,12 @@ export default {
           border: 'var(--cwail-border)',
           accent: 'var(--cwail-accent)',
           accent2: 'var(--cwail-accent-2)',
+        },
+        /** CWAIL Academy print / certificate palette */
+        academy: {
+          cream: '#F2F0E9',
+          forest: '#0F2922',
+          orange: '#F89B4E',
         },
         /* Neutral grey scale for dark UI (true neutral, not blue- or green-shifted) */
         gray: {

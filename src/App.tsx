@@ -14,6 +14,8 @@ import CitingAIPage from './pages/CitingAIPage';
 import ResponsibleAIPage from './pages/ResponsibleAIPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
+import CertificatePage from './pages/CertificatePage';
+import VerifyCertificatePage from './pages/VerifyCertificatePage';
 import { RequireQuizUnlocked } from './lib/guards';
 
 function App() {
@@ -47,6 +49,8 @@ function App() {
             <Route path="/resources/responsible-ai" element={<ResponsibleAIPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/certificate" element={<CertificatePage />} />
+            <Route path="/v/:id" element={<VerifyCertificatePage />} />
           </Routes>
         </motion.main>
         <Footer />
