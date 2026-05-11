@@ -70,6 +70,47 @@ const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen">
       <ScrollIndicator />
+      {showRemoveConfirm ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="remove-user-title"
+        >
+          <div className="w-full max-w-md rounded-2xl border border-amber-200/30 bg-[#1c1917] p-6 text-left text-[#faf8f3] shadow-2xl">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-200/15 text-amber-200">
+                <AlertTriangle className="h-5 w-5" aria-hidden />
+              </div>
+              <div>
+                <h2 id="remove-user-title" className="text-lg font-semibold">
+                  Clear this learner session?
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-[#faf8f3]/75">
+                  This removes the saved name, course progress, responses, quiz answers, and certificate data
+                  from this browser.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setShowRemoveConfirm(false)}
+                className="rounded-md border border-white/25 px-4 py-2 text-sm font-medium text-[#faf8f3] hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRemoveUser}
+                className="rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-400 focus:outline-none focus:ring-2 focus:ring-red-200"
+              >
+                Clear everything
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {/* Hero Section */}
       <section className="relative overflow-hidden min-h-[60vh] lg:min-h-[72vh]">
         <GradientBackground
@@ -178,36 +219,6 @@ const HomePage: React.FC = () => {
                   ) : null}
                 </>
               )}
-              {showRemoveConfirm ? (
-                <div className="mt-4 rounded-xl border border-amber-200/35 bg-[#1c1917]/45 p-4 shadow-lg backdrop-blur">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-200" aria-hidden />
-                    <div>
-                      <p className="text-sm font-semibold text-[#faf8f3]">Clear this learner session?</p>
-                      <p className="mt-1 text-xs leading-relaxed text-[#faf8f3]/75">
-                        This removes the saved name, course progress, responses, quiz answers, and certificate data
-                        from this browser.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={handleConfirmRemoveUser}
-                      className="rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-400 focus:outline-none focus:ring-2 focus:ring-red-200"
-                    >
-                      Clear everything
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowRemoveConfirm(false)}
-                      className="rounded-md border border-white/30 px-4 py-2 text-sm font-medium text-[#faf8f3] hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : null}
               {nameError ? <p className="mt-2 text-sm text-amber-200">{nameError}</p> : null}
             </motion.div>
             <motion.div
