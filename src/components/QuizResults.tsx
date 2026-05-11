@@ -1,5 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Award, RotateCcw, FileText } from 'lucide-react';
+import { ENABLE_CERT } from '../lib/flags';
 
 interface QuizResultsProps {
   score: number;
@@ -90,8 +92,43 @@ const QuizResults: React.FC<QuizResultsProps> = ({
         </div>
       </div>
 
-      {/* Certificate Eligibility */}
-      {isCertificateEligible && (
+      {/* Certificate — final quiz completion */}
+      {passed && ENABLE_CERT && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start space-x-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full shrink-0">
+                <Award className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                  Your certificate
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                  Generate a verified certificate with your name and a QR code to confirm completion.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:items-end shrink-0">
+              <Link
+                to="/certificate"
+                className="inline-flex items-center justify-center px-5 py-2.5 bg-academy-orange hover:opacity-95 text-white font-semibold rounded-lg transition-opacity focus:outline-none focus:ring-2 focus:ring-academy-orange focus:ring-offset-2 dark:focus:ring-offset-gray-900 space-x-2"
+              >
+                <FileText className="h-4 w-4" />
+                <span>Generate certificate</span>
+              </Link>
+              <Link
+                to="/celebration"
+                className="text-sm font-medium text-blue-800 dark:text-blue-200 underline underline-offset-2 text-center sm:text-right"
+              >
+                View completion summary
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {passed && !ENABLE_CERT && isCertificateEligible && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
@@ -108,7 +145,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
             <button
               disabled
               className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 rounded-lg cursor-not-allowed flex items-center space-x-2"
-              title="Eligible — certificate generation available in next release"
+              title="Certificate generation is not enabled for this build"
             >
               <FileText className="h-4 w-4" />
               <span>Generate Certificate</span>

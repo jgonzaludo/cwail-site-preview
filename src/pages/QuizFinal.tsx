@@ -77,6 +77,9 @@ const QuizFinal: React.FC = () => {
       setScore(latestScore);
       setAttempts(getAttempts());
       setSubmitted(!!latestScore);
+      if (latestScore?.passed) {
+        setCertificateEligible(true);
+      }
       
     } catch (error) {
       console.error('Failed to initialize quiz:', error);

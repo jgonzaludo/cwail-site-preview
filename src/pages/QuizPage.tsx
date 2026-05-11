@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { FileText } from 'lucide-react';
 import SectionNav from '../components/SectionNav';
 import Toast from '../components/Toast';
+import { ENABLE_CERT } from '../lib/flags';
 import { getAllRequiredSections, isCompleted } from '../lib/progress';
 import { 
   calculateScore,
@@ -356,6 +358,32 @@ const QuizPage: React.FC = () => {
                       : 'You need 8/10 (80%) to pass.'}
                   </p>
                 </div>
+
+                {result.score >= 8 && ENABLE_CERT && (
+                  <div className="mb-8 rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-900/20 text-left">
+                    <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                      Your certificate
+                    </h3>
+                    <p className="mt-1 text-sm text-blue-800 dark:text-blue-200">
+                      Create your completion certificate with verification QR code.
+                    </p>
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                      <Link
+                        to="/certificate"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-academy-orange px-5 py-2.5 text-sm font-semibold text-white hover:opacity-95"
+                      >
+                        <FileText className="h-4 w-4 shrink-0" />
+                        Generate certificate
+                      </Link>
+                      <Link
+                        to="/celebration"
+                        className="text-sm font-medium text-blue-800 underline underline-offset-2 dark:text-blue-200"
+                      >
+                        View completion summary
+                      </Link>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="space-y-4 mb-8">
                   {quiz.questions.map((question, index) => renderQuestion(question, index))}
