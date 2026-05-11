@@ -76,9 +76,23 @@ export function clearStoredUserName(): void {
   } catch {
     /* ignore */
   }
-  const { user_name: _removed, ...rest } = progress;
+  delete progress.user_name;
   try {
-    localStorage.setItem('progress_data', JSON.stringify(rest));
+    localStorage.setItem('progress_data', JSON.stringify(progress));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Clear all browser-persisted learner state for a clean local restart. */
+export function clearLearnerSiteState(): void {
+  try {
+    localStorage.clear();
+  } catch {
+    /* ignore */
+  }
+  try {
+    sessionStorage.clear();
   } catch {
     /* ignore */
   }
