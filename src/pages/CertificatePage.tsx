@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Printer, RotateCcw } from 'lucide-react';
+import ModuleResponsesSummary from '../components/ModuleResponsesSummary';
+import { getStoredUserName } from '../lib/learnerContext';
 
 const STORAGE_CERT_ID = 'cwail:completion_id';
 
@@ -14,8 +16,8 @@ function readLocalString(key: string): string | null {
 }
 
 function readUserName(): string {
-  const direct = readLocalString('user_name');
-  if (direct?.trim()) return direct.trim();
+  const n = getStoredUserName();
+  if (n) return n;
   return 'Learner';
 }
 
@@ -144,6 +146,8 @@ const CertificatePage: React.FC = () => {
           {issueError}
         </p>
       )}
+
+      <ModuleResponsesSummary variant="certificate" />
 
       <div className="cert-surface mx-auto max-w-4xl rounded-sm shadow-2xl print:shadow-none print:rounded-none">
         <div className="cert-inner border-[20px] border-academy-forest bg-academy-cream p-6 shadow-[inset_0_0_0_2px_theme(colors.academy.cream)] sm:p-10 md:p-12">

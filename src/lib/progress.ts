@@ -103,6 +103,12 @@ export function hasSubmittedResponse(sectionId: string): boolean {
     const conclusionData = storage.get('conclusion-response', null);
     return conclusionData && conclusionData.response && conclusionData.response.trim().length > 0;
   }
+  if (sectionId === 'introduction') {
+    const primary = storage.get('cwail:response:introduction', '');
+    if (primary.trim()) return true;
+    const legacy = storage.get('cwail:response:intro_prompt', '');
+    return legacy.trim().length > 0;
+  }
   const response = storage.get(`cwail:response:${sectionId}`, '');
   return response.trim().length > 0;
 }

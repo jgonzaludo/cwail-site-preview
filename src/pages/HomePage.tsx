@@ -1,12 +1,28 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { BookOpen, Users, FileText, Mail, Brain, Shield, Pencil, Zap, GraduationCap, Lightbulb } from 'lucide-react';
 import { motion } from 'framer-motion';
 import GradientBackground from '../components/ui/gradient-background';
 import { RevealOnScroll } from '../components/RevealOnScroll';
 import ScrollIndicator from '../components/ScrollIndicator';
+import { getStoredUserName, persistUserNameForModule } from '../lib/learnerContext';
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+  const [learnerName, setLearnerName] = useState(() => getStoredUserName());
+  const [nameError, setNameError] = useState('');
+
+  const handleBegin = () => {
+    const n = learnerName.trim();
+    if (!n) {
+      setNameError('Please enter your name so we can personalize your certificate and summary.');
+      return;
+    }
+    setNameError('');
+    persistUserNameForModule(n);
+    navigate('/course/introduction');
+  };
+
   return (
     <div className="min-h-screen">
       <ScrollIndicator />
@@ -46,15 +62,47 @@ const HomePage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.44 }}
-              className="mt-10"
+              transition={{ duration: 0.55, delay: 0.4 }}
+              className="mt-10 max-w-md mx-auto w-full text-left"
             >
-              <Link
-                to="/course/introduction"
+              <label
+                htmlFor="home-learner-name"
+                className="block text-sm font-medium text-[#a7f3d0]/95"
+              >
+                Your name
+              </label>
+              <p className="mt-1 text-xs text-[#a7f3d0]/75">
+                We&apos;ll use this on your completion summary and certificate.
+              </p>
+              <input
+                id="home-learner-name"
+                type="text"
+                autoComplete="name"
+                value={learnerName}
+                onChange={(e) => {
+                  setLearnerName(e.target.value);
+                  if (nameError) setNameError('');
+                }}
+                placeholder="e.g. Alex Chen"
+                className="mt-3 w-full rounded-lg border border-white/30 bg-white/10 px-4 py-3 text-[#faf8f3] placeholder:text-[#faf8f3]/45 focus:outline-none focus:ring-2 focus:ring-[#fb923c] focus:border-transparent"
+              />
+              {nameError ? (
+                <p className="mt-2 text-sm text-amber-200">{nameError}</p>
+              ) : null}
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.5 }}
+              className="mt-8"
+            >
+              <button
+                type="button"
+                onClick={handleBegin}
                 className="inline-block font-medium bg-[#fb923c] text-[#1c1917] px-8 py-3.5 rounded-lg border border-[#fdba74] hover:bg-[#fdba74] transition-all duration-300 shadow-lg shadow-black/20"
               >
                 Begin the 15-Minute Module →
-              </Link>
+              </button>
             </motion.div>
           </div>
         </GradientBackground>

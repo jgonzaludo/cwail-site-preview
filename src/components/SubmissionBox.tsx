@@ -22,9 +22,18 @@ const SubmissionBox: React.FC<SubmissionBoxProps> = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [wordCount, setWordCount] = useState(0);
 
-  // Load existing response from localStorage
+  // Load existing response from localStorage (migrate legacy intro key)
   useEffect(() => {
-    const savedResponse = storage.get(`cwail:response:${id}`, '');
+    let savedResponse = storage.get(`cwail:response:${id}`, '');
+    if (!savedResponse.trim() && id === 'introduction') {
+      const legacy = storage.get('cwail:response:intro_prompt', '');
+      if (legacy.trim()) {
+        storage.set(`cwail:response:introduction`, legacy);
+        const ts = storage.get('cwail:response:intro_prompt:ts', '');
+        if (ts) storage.set('cwail:response:introduction:ts', ts);
+        savedResponse = legacy;
+      }
+    }
     if (savedResponse) {
       setResponse(savedResponse);
       setIsSubmitted(true);

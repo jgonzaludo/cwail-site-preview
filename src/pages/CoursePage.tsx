@@ -8,6 +8,7 @@ import Callout from '../components/Callout';
 import Toast from '../components/Toast';
 import PartingMessageModal from '../components/PartingMessageModal';
 import SubmissionBox from '../components/SubmissionBox';
+import IntroductionNameCallout from '../components/IntroductionNameCallout';
 import TokenLabEmbed from '../components/TokenLabEmbed';
 import { RevealOnScroll } from '../components/RevealOnScroll';
 import { setCompleted, isCompleted, getProgressPercentage, nextSectionId, canAccessConclusion, canAccessPartingMessage, getAllRequiredSections, hasSubmittedResponse, canAccessSection } from '../lib/progress';
@@ -297,7 +298,7 @@ const CoursePage: React.FC = () => {
         return (
           <SubmissionBox
             key={index}
-            id="intro_prompt"
+            id="introduction"
             minWords={100}
             maxWords={250}
             placeholder="Enter your response here..."
@@ -772,6 +773,7 @@ const CoursePage: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <RevealOnScroll>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            {sectionId === 'introduction' ? <IntroductionNameCallout /> : null}
             {sectionId === 'conclusion' && section.content ? (
               renderConclusionContent()
             ) : section.lead && section.sections ? (

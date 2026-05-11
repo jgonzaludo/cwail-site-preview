@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ENABLE_CERT } from '../lib/flags';
+import ModuleResponsesSummary from '../components/ModuleResponsesSummary';
+import { getStoredUserName } from '../lib/learnerContext';
 
 const CelebrationPage: React.FC = () => {
+  const [displayName, setDisplayName] = useState(() => getStoredUserName());
+
+  useEffect(() => {
+    setDisplayName(getStoredUserName());
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900 dark:to-blue-900 flex items-center justify-center">
-      <div className="max-w-2xl mx-auto text-center px-4">
+      <div className="max-w-3xl mx-auto text-center px-4">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -19,7 +27,13 @@ const CelebrationPage: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4"
           >
-            🎉 Congratulations!
+            {displayName.trim() ? (
+              <>
+                🎉 Congratulations, {displayName.trim()}!
+              </>
+            ) : (
+              <>🎉 Congratulations!</>
+            )}
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -27,8 +41,9 @@ const CelebrationPage: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-xl text-gray-600 dark:text-gray-300 mb-6"
           >
-            You've completed the AI Literacy course!
+            You&apos;ve completed the AI Literacy course!
           </motion.p>
+          <ModuleResponsesSummary variant="celebration" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
