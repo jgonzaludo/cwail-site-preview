@@ -45,7 +45,11 @@ function rowToObject(row, columns) {
 
 app.post('/api/issue', async (req, res) => {
   try {
-    const { user_name, course_id } = req.body ?? {};
+    const body = req.body;
+    if (body == null || typeof body !== 'object' || Array.isArray(body)) {
+      return res.status(400).json({ error: 'Expected JSON body with user_name and course_id' });
+    }
+    const { user_name, course_id } = body;
     if (
       typeof user_name !== 'string' ||
       typeof course_id !== 'string' ||
@@ -57,15 +61,25 @@ app.post('/api/issue', async (req, res) => {
 
     const id = randomBytes(5).toString('hex');
     const db = getDb();
-    await db.execute({
-      sql: 'INSERT INTO completions (id, user_name, course_id) VALUES (?, ?, ?)',
+    const result = await db.execute({
+      sql: 'INSERT INTO completions (id, user_name, course_id) VALUES (?, ?, ?) RETURNING id, created_at',
       args: [id, user_name.trim(), course_id.trim()],
     });
 
-    return res.json({ id });
+    const columns = result.columns ?? [];
+    const rawRow = result.rows[0];
+    const row = rowToObject(rawRow, columns);
+    const outId = row?.id != null ? String(row.id) : id;
+    const issuedAt = row?.created_at != null ? String(row.created_at) : '';
+
+    return res.json({ id: outId.toLowerCase(), issued_at: issuedAt });
   } catch (err) {
     console.error('POST /api/issue', err);
-    return res.status(500).json({ error: 'Failed to record completion' });
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({
+      error: 'Failed to record completion',
+      details: message,
+    });
   }
 });
 

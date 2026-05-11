@@ -114,12 +114,53 @@ html:not(.dark) .wavy-overlay {
 }
 
 @media print {
+  @page {
+    size: landscape;
+    margin: 0.4cm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .cert-print-target,
+  .cert-print-target * {
+    visibility: visible;
+  }
+
+  .cert-print-target {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    z-index: 9999;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  html,
+  body {
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: var(--academy-cream) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   .no-print {
     display: none !important;
   }
 
   .cert-page-root {
-    background: var(--academy-cream) !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -129,9 +170,12 @@ html:not(.dark) .wavy-overlay {
     border-radius: 0 !important;
   }
 
-  .cert-inner {
+  .cert-inner,
+  .cert-document {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
 

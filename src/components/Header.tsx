@@ -29,7 +29,7 @@ const Header: React.FC = () => {
     'text-cwail-muted hover:text-cwail-accent2 dark:hover:text-cwail-accent px-3 py-2 text-sm font-medium transition-colors rounded-md';
 
   return (
-    <header className="w-full border-b border-cwail-border bg-cwail-elevated/80 backdrop-blur-md">
+    <header className="no-print w-full border-b border-cwail-border bg-cwail-elevated/80 backdrop-blur-md">
       <div className="relative flex w-full items-center justify-between gap-4 py-3 px-4 sm:px-6 lg:px-8 min-h-[3.25rem]">
         <div className="relative z-10 flex min-w-0 shrink-0 items-center">
           <Link

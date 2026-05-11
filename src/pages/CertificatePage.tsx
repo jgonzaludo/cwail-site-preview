@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Printer, RotateCcw } from 'lucide-react';
 import ModuleResponsesSummary from '../components/ModuleResponsesSummary';
 import { getStoredUserName } from '../lib/learnerContext';
 
 const STORAGE_CERT_ID = 'cwail:completion_id';
+const STORAGE_CERT_ISSUED_AT = 'cwail:completion_issued_at';
 
 function readLocalString(key: string): string | null {
   try {
@@ -50,15 +51,49 @@ function CwailBookIcon({ className }: { className?: string }) {
   );
 }
 
-function courseTitleFromId(courseId: string): string {
-  if (courseId === 'cwail-ai-literacy') return 'AI Literacy Program';
-  return courseId.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+/** Smooth scalloped circle path (professional seal edge). */
+function scallopedSealPath(cx: number, cy: number, bumps: number, rOuter: number, rInner: number): string {
+  const segments: string[] = [];
+  const step = (2 * Math.PI) / bumps;
+  for (let i = 0; i < bumps; i++) {
+    const a0 = i * step - Math.PI / 2;
+    const a1 = (i + 0.5) * step - Math.PI / 2;
+    const a2 = (i + 1) * step - Math.PI / 2;
+    const x0 = cx + rOuter * Math.cos(a0);
+    const y0 = cy + rOuter * Math.sin(a0);
+    const x1 = cx + rInner * Math.cos(a1);
+    const y1 = cy + rInner * Math.sin(a1);
+    const x2 = cx + rOuter * Math.cos(a2);
+    const y2 = cy + rOuter * Math.sin(a2);
+    if (i === 0) segments.push(`M ${x0.toFixed(3)} ${y0.toFixed(3)}`);
+    segments.push(`Q ${x1.toFixed(3)} ${y1.toFixed(3)} ${x2.toFixed(3)} ${y2.toFixed(3)}`);
+  }
+  segments.push('Z');
+  return segments.join(' ');
+}
+
+const SEAL_PATH = scallopedSealPath(100, 100, 28, 88, 72);
+
+async function parseIssueErrorResponse(res: Response): Promise<{ message: string; raw: unknown }> {
+  const text = await res.text();
+  if (!text.trim()) {
+    return { message: `Issue failed (${res.status})`, raw: null };
+  }
+  try {
+    const json = JSON.parse(text) as { error?: string; details?: string };
+    const detail = typeof json.details === 'string' && json.details.trim() ? ` — ${json.details.trim()}` : '';
+    const base =
+      typeof json.error === 'string' && json.error.trim() ? json.error.trim() : `Issue failed (${res.status})`;
+    return { message: `${base}${detail}`, raw: json };
+  } catch {
+    return { message: text.slice(0, 200) || `Issue failed (${res.status})`, raw: text };
+  }
 }
 
 const CertificatePage: React.FC = () => {
   const [userName, setUserName] = useState('');
-  const [courseId, setCourseId] = useState('');
   const [hexId, setHexId] = useState<string | null>(null);
+  const [issuedAt, setIssuedAt] = useState<string | null>(null);
   const [issueError, setIssueError] = useState<string | null>(null);
   const [busy, setBusy] = useState(true);
 
@@ -70,11 +105,12 @@ const CertificatePage: React.FC = () => {
     const name = readUserName();
     const cid = readCourseId();
     setUserName(name);
-    setCourseId(cid);
 
     const existing = localStorage.getItem(STORAGE_CERT_ID);
     if (existing && /^[a-f0-9]{10}$/i.test(existing)) {
       setHexId(existing.toLowerCase());
+      const storedDate = readLocalString(STORAGE_CERT_ISSUED_AT);
+      setIssuedAt(storedDate?.trim() || null);
       setBusy(false);
       return;
     }
@@ -88,16 +124,30 @@ const CertificatePage: React.FC = () => {
         body: JSON.stringify({ user_name: name, course_id: cid }),
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error || 'Issue failed');
+        const { message, raw } = await parseIssueErrorResponse(res);
+        console.error('[CertificatePage] POST /api/issue failed', res.status, raw);
+        throw new Error(message);
       }
-      const data = (await res.json()) as { id: string };
+      let data: { id: string; issued_at?: string };
+      try {
+        data = (await res.json()) as { id: string; issued_at?: string };
+      } catch (parseErr) {
+        console.error('[CertificatePage] Invalid JSON from /api/issue', parseErr);
+        throw new Error('Invalid response from certificate server');
+      }
       const id = String(data.id).toLowerCase();
+      const at =
+        typeof data.issued_at === 'string' && data.issued_at.trim() ? data.issued_at.trim() : null;
       localStorage.setItem(STORAGE_CERT_ID, id);
+      if (at) localStorage.setItem(STORAGE_CERT_ISSUED_AT, at);
       setHexId(id);
+      setIssuedAt(at);
     } catch (e) {
-      setIssueError(e instanceof Error ? e.message : 'Could not issue certificate');
+      const msg = e instanceof Error ? e.message : 'Could not issue certificate';
+      console.error('[CertificatePage] issueCertificate', msg, e);
+      setIssueError(msg);
       setHexId(null);
+      setIssuedAt(null);
     } finally {
       setBusy(false);
     }
@@ -107,12 +157,30 @@ const CertificatePage: React.FC = () => {
     void issueCertificate();
   }, [issueCertificate]);
 
-  const qrUrl =
-    hexId && verifyBaseUrl
-      ? `https://quickchart.io/qr?text=${encodeURIComponent(`${verifyBaseUrl}/v/${hexId}`)}&size=250`
-      : '';
+  const qrUrl = useMemo(() => {
+    if (!hexId || !verifyBaseUrl) return '';
+    return `https://quickchart.io/qr?text=${encodeURIComponent(`${verifyBaseUrl}/v/${hexId}`)}&size=250`;
+  }, [hexId, verifyBaseUrl]);
 
   const displayId = hexId ? `CS-CWAIL-${hexId}` : '';
+
+  const issuanceLabel = issuedAt
+    ? (() => {
+        try {
+          const d = new Date(issuedAt);
+          if (!Number.isNaN(d.getTime())) {
+            return d.toLocaleDateString(undefined, {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            });
+          }
+        } catch {
+          /* ignore */
+        }
+        return issuedAt;
+      })()
+    : null;
 
   const navigate = useNavigate();
   const handleNewSession = () => {
@@ -121,12 +189,12 @@ const CertificatePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen py-10 px-4 cert-page-root">
+    <div className="cert-page-root min-h-screen py-10 px-4 bg-transparent text-cwail-ink dark:bg-neutral-950 dark:text-cwail-ink">
       <div className="no-print mx-auto mb-6 flex max-w-3xl flex-wrap items-center justify-center gap-3">
         <button
           type="button"
           onClick={() => window.print()}
-          className="inline-flex items-center gap-2 rounded-lg border border-academy-forest/30 bg-cwail-elevated px-4 py-2 text-sm font-medium text-academy-forest shadow-sm hover:bg-cwail-bg"
+          className="inline-flex items-center gap-2 rounded-lg border border-academy-forest/30 bg-cwail-elevated px-4 py-2 text-sm font-medium text-academy-forest shadow-sm hover:bg-cwail-bg dark:border-academy-forest/50 dark:bg-cwail-elevated dark:text-academy-cream dark:hover:bg-neutral-800"
         >
           <Printer className="h-4 w-4" aria-hidden />
           Download / Print
@@ -149,81 +217,71 @@ const CertificatePage: React.FC = () => {
 
       <ModuleResponsesSummary variant="certificate" />
 
-      <div className="cert-surface mx-auto max-w-4xl rounded-sm shadow-2xl print:shadow-none print:rounded-none">
-        <div className="cert-inner border-[20px] border-academy-forest bg-academy-cream p-6 shadow-[inset_0_0_0_2px_theme(colors.academy.cream)] sm:p-10 md:p-12">
-          <div className="flex flex-col items-center text-center">
-            <CwailBookIcon className="mb-4 h-12 w-auto text-academy-forest sm:h-14" />
-
-            <h1 className="font-cert-serif text-3xl font-semibold tracking-[0.35em] text-academy-forest sm:text-4xl">
-              CERTIFICATE
+      <div className="cert-print-target cert-surface mx-auto w-full max-w-[900px] shadow-2xl print:shadow-none">
+        <div
+          className="cert-inner cert-document flex aspect-[900/636] w-full flex-col border-[16px] border-[#0F2922] bg-[#F2F0E9] p-6 text-[#0F2922] shadow-[inset_0_0_0_2px_#F2F0E9] sm:p-8 md:p-10"
+          style={{ colorScheme: 'light' }}
+        >
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-start text-center">
+            <h1 className="font-cert-serif text-2xl font-semibold leading-snug tracking-wide text-[#0F2922] sm:text-3xl md:text-[2rem]">
+              Certificate of Completion
             </h1>
-            <p className="mt-1 font-cert-sans text-sm font-semibold uppercase tracking-[0.2em] text-academy-forest/80 sm:text-base">
-              OF COMPLETION
-            </p>
-            <div className="mx-auto mt-5 h-1 w-56 max-w-[85%] bg-academy-orange" style={{ height: '4px' }} />
+            <div className="mx-auto mt-4 h-1 w-48 max-w-[85%] rounded-full bg-academy-orange" style={{ height: '4px' }} />
 
-            <p className="mt-10 font-cert-sans text-sm font-normal text-neutral-500 dark:text-neutral-400">
-              This certifies that
-            </p>
-            <p className="font-cert-serif mt-3 text-3xl font-bold text-academy-forest sm:text-4xl md:text-5xl">
+            <p className="mt-8 font-cert-sans text-sm font-normal text-[#4a5754]">This certifies that</p>
+            <p className="font-cert-serif mt-3 text-3xl font-bold text-[#0F2922] sm:text-4xl md:text-5xl">
               {userName || '—'}
             </p>
-            <p className="mt-6 font-cert-sans text-sm font-light text-neutral-500 dark:text-neutral-400">
-              successfully completed the
-            </p>
-            <p className="font-cert-sans mt-2 text-xl font-bold text-academy-orange sm:text-2xl">
-              {courseId ? courseTitleFromId(courseId) : '—'}
+            <p className="mt-6 max-w-lg px-2 font-cert-sans text-base font-normal leading-relaxed text-[#4a5754] sm:text-lg">
+              successfully finished AI Literacy program
             </p>
           </div>
 
-          <div className="mt-12 flex flex-col items-stretch justify-between gap-10 md:flex-row md:items-end">
-            <div className="flex flex-1 justify-center md:justify-start">
-              <div className="relative flex h-36 w-36 items-center justify-center text-academy-forest">
-                <svg viewBox="0 0 200 200" className="h-36 w-36" aria-hidden>
-                  <defs>
-                    <path
-                      id="sealCircle"
-                      d="M 100,100 m -68,0 a 68,68 0 1,1 136,0 a 68,68 0 1,1 -136,0"
-                    />
-                  </defs>
-                  {Array.from({ length: 24 }, (_, i) => {
-                    const step = (360 / 24) * i;
-                    const rad = (step * Math.PI) / 180;
-                    const rOuter = 88;
-                    const rInner = 78;
-                    const x1 = 100 + rOuter * Math.cos(rad - Math.PI / 2);
-                    const y1 = 100 + rOuter * Math.sin(rad - Math.PI / 2);
-                    const x2 = 100 + rInner * Math.cos(rad + Math.PI / 24 - Math.PI / 2);
-                    const y2 = 100 + rInner * Math.sin(rad + Math.PI / 24 - Math.PI / 2);
-                    return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" strokeWidth="5" strokeLinecap="round" />;
-                  })}
-                  <circle cx="100" cy="100" r="58" className="fill-academy-forest" />
-                  <text fill="white" fontSize="8" letterSpacing="0.12em" fontWeight="600">
-                    <textPath href="#sealCircle" startOffset="6%">
-                      CWAIL LITERACY PROGRAM • CWAIL LITERACY PROGRAM •
-                    </textPath>
-                  </text>
+          <div className="mt-auto grid w-full grid-cols-[1fr_auto_1fr] items-end gap-4 pt-6">
+            <div className="flex justify-start">
+              <div className="relative h-[120px] w-[120px] shrink-0 sm:h-[132px] sm:w-[132px]">
+                <svg viewBox="0 0 200 200" className="h-full w-full text-[#0F2922]" aria-hidden>
+                  <path d={SEAL_PATH} fill="currentColor" />
+                  <circle cx="100" cy="100" r="52" fill="#F2F0E9" />
                 </svg>
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <CwailBookIcon className="h-[58px] w-[58px] text-[#0F2922] sm:h-[64px] sm:w-[64px]" />
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col items-center md:items-end">
-              {busy && !hexId ? (
-                <p className="font-mono text-xs text-neutral-500">Issuing verification…</p>
-              ) : qrUrl ? (
-                <>
-                  <img src={qrUrl} alt="Verification QR code" width={120} height={120} className="h-[120px] w-[120px]" />
-                  <p className="mt-2 font-mono text-[10px] text-academy-forest/80">ID: {displayId}</p>
-                </>
+            <div className="flex flex-col items-center justify-end px-2 pb-1 text-center">
+              {issuanceLabel ? (
+                <p className="font-cert-sans text-[10px] font-medium uppercase tracking-[0.2em] text-[#4a5754]">
+                  Date of issuance
+                </p>
               ) : null}
+              {issuanceLabel ? (
+                <p className="font-cert-sans mt-0.5 text-xs text-[#0F2922]">{issuanceLabel}</p>
+              ) : null}
+              <p className="font-cert-sans mt-2 text-[10px] font-medium uppercase tracking-[0.18em] text-[#4a5754]">
+                Unique ID
+              </p>
+              <p className="font-mono mt-0.5 text-[11px] text-[#0F2922]">{hexId ? displayId : '—'}</p>
             </div>
-          </div>
 
-          <div className="mt-10 text-center">
-            <div className="mx-auto h-px max-w-md bg-neutral-400/50" />
-            <p className="mt-2 font-cert-sans text-[10px] font-medium uppercase tracking-[0.25em] text-neutral-500">
-              Verified Digital Signature
-            </p>
+            <div className="flex justify-end">
+              <div className="flex w-[120px] flex-col items-center sm:w-[132px]">
+                {busy && !hexId ? (
+                  <p className="font-cert-sans text-center text-xs text-[#4a5754]">Generating QR…</p>
+                ) : qrUrl ? (
+                  <img
+                    src={qrUrl}
+                    alt="Verification QR code"
+                    width={250}
+                    height={250}
+                    className="h-[120px] w-[120px] sm:h-[132px] sm:w-[132px]"
+                  />
+                ) : (
+                  <p className="font-cert-sans text-center text-xs text-[#4a5754]">Verification unavailable</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
