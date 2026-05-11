@@ -96,6 +96,11 @@ export function clearLearnerSiteState(): void {
   } catch {
     /* ignore */
   }
+  try {
+    window.dispatchEvent(new CustomEvent('cwail:cert:eligibility-changed'));
+  } catch {
+    /* ignore */
+  }
 }
 
 /**

@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Award, Menu, X, Sun, Moon } from 'lucide-react';
+import { isCompleted } from '../lib/progress';
+import { isCertificateEligible } from '../lib/quizScoring';
+
+function canViewCertificate(): boolean {
+  return isCertificateEligible() || isCompleted('final_quiz') || isCompleted('cwail-final-quiz');
+}
 
 const Header: React.FC = () => {
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showCertificateLink, setShowCertificateLink] = useState(() => canViewCertificate());
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('theme') === 'dark';
@@ -21,6 +29,28 @@ const Header: React.FC = () => {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    setShowCertificateLink(canViewCertificate());
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const refreshCertificateLink = () => {
+      setShowCertificateLink(canViewCertificate());
+    };
+
+    window.addEventListener('storage', refreshCertificateLink);
+    window.addEventListener('focus', refreshCertificateLink);
+    window.addEventListener('cwail:cert:eligibility-changed', refreshCertificateLink);
+    window.addEventListener('cwail:section:completed', refreshCertificateLink);
+
+    return () => {
+      window.removeEventListener('storage', refreshCertificateLink);
+      window.removeEventListener('focus', refreshCertificateLink);
+      window.removeEventListener('cwail:cert:eligibility-changed', refreshCertificateLink);
+      window.removeEventListener('cwail:section:completed', refreshCertificateLink);
+    };
+  }, []);
+
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -31,7 +61,7 @@ const Header: React.FC = () => {
   return (
     <header className="no-print w-full border-b border-cwail-border bg-cwail-elevated/80 backdrop-blur-md">
       <div className="relative flex w-full items-center justify-between gap-4 py-3 px-4 sm:px-6 lg:px-8 min-h-[3.25rem]">
-        <div className="relative z-10 flex min-w-0 shrink-0 items-center">
+        <div className="relative z-10 flex min-w-0 shrink-0 items-center gap-2">
           <Link
             to="/"
             className="flex items-center gap-2 px-3 py-2 rounded-lg border border-cwail-border bg-cwail-bg/60 hover:border-cwail-accent2/40 transition-colors"
@@ -47,6 +77,15 @@ const Header: React.FC = () => {
             </svg>
             <span className="font-display font-semibold text-cwail-ink tracking-tight">CWAIL</span>
           </Link>
+          {showCertificateLink ? (
+            <Link
+              to="/certificate"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-cwail-accent2/35 bg-cwail-accent2/10 px-3 py-2 text-xs font-semibold text-cwail-accent2 transition-colors hover:bg-cwail-accent2/15"
+            >
+              <Award className="h-4 w-4" aria-hidden />
+              <span className="hidden sm:inline">View certificate</span>
+            </Link>
+          ) : null}
         </div>
 
         <nav
@@ -102,6 +141,7 @@ const Header: React.FC = () => {
           <div className="flex flex-col gap-1">
             {[
               ['/', 'Home'],
+              ...(showCertificateLink ? [['/certificate', 'View certificate']] : []),
               ['/course/introduction', 'Course'],
               ['/lab/tokenization', 'Lab'],
               ['/resources', 'Resources'],

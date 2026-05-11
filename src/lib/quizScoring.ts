@@ -102,6 +102,9 @@ export function getScore(): QuizScore | null {
 
 export function setCertificateEligible(eligible: boolean): void {
   storage.set(`cwail:cert:eligible`, eligible);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('cwail:cert:eligibility-changed'));
+  }
 }
 
 export function isCertificateEligible(): boolean {
