@@ -12,6 +12,7 @@ import IntroductionNameCallout from '../components/IntroductionNameCallout';
 import TokenLabEmbed from '../components/TokenLabEmbed';
 import { RevealOnScroll } from '../components/RevealOnScroll';
 import { setCompleted, isCompleted, getProgressPercentage, nextSectionId, canAccessConclusion, canAccessPartingMessage, getAllRequiredSections, hasSubmittedResponse, canAccessSection } from '../lib/progress';
+import { getOrCreateLearnerSessionId, getStoredUserName } from '../lib/learnerContext';
 
 interface Block {
   type: 'h2' | 'p' | 'accordion' | 'callout' | 'cta' | 'shortResponseBox' | 'ul' | 'tokenWorkshop';
@@ -53,6 +54,8 @@ const CoursePage: React.FC = () => {
   const [responseSubmittedThisSession, setResponseSubmittedThisSession] = useState(false);
   const [submissionBoxSubmitted, setSubmissionBoxSubmitted] = useState(false);
   const [showAccordionTooltip, setShowAccordionTooltip] = useState(false);
+  const [conclusionLocked, setConclusionLocked] = useState(false);
+  const [conclusionSubmitting, setConclusionSubmitting] = useState(false);
 
   // Check if current section requires a response
   const sectionRequiresResponse = (sectionId: string): boolean => {
@@ -89,12 +92,91 @@ const CoursePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (sectionId !== 'conclusion') {
+      setConclusionLocked(false);
+      return;
+    }
+    try {
+      const raw = localStorage.getItem('conclusion-response');
+      if (!raw) return;
+      const d = JSON.parse(raw) as {
+        response?: string;
+        aiDisclosure?: string;
+        otherExplanation?: string;
+        syncedToDb?: boolean;
+      };
+      if (typeof d.response === 'string') setConclusionResponse(d.response);
+      if (typeof d.aiDisclosure === 'string') setAiDisclosure(d.aiDisclosure);
+      if (typeof d.otherExplanation === 'string') setOtherExplanation(d.otherExplanation);
+      if (
+        typeof d.response === 'string' &&
+        d.response.trim().length > 0 &&
+        typeof d.aiDisclosure === 'string' &&
+        d.aiDisclosure.trim().length > 0
+      ) {
+        setConclusionLocked(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [sectionId]);
+
+  /** Backfill: legacy localStorage-only submissions get one server sync attempt. */
+  useEffect(() => {
+    if (sectionId !== 'conclusion') return;
+    const raw = localStorage.getItem('conclusion-response');
+    if (!raw) return;
+    let d: {
+      response?: string;
+      aiDisclosure?: string;
+      otherExplanation?: string;
+      timestamp?: string;
+      syncedToDb?: boolean;
+    };
+    try {
+      d = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    if (d.syncedToDb) return;
+    if (!d.response?.trim() || !d.aiDisclosure?.trim()) return;
+
+    const sessionKey = getOrCreateLearnerSessionId();
+    const userName = getStoredUserName();
+    void (async () => {
+      try {
+        const res = await fetch('/api/responses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_key: sessionKey,
+            section_id: 'conclusion',
+            user_name: userName || null,
+            response_text: d.response!.trim(),
+            ai_disclosure: d.aiDisclosure!.trim(),
+            other_explanation: d.otherExplanation?.trim() || null,
+          }),
+        });
+        if (!res.ok) return;
+        const next = {
+          ...d,
+          syncedToDb: true,
+          timestamp: d.timestamp ?? new Date().toISOString(),
+        };
+        localStorage.setItem('conclusion-response', JSON.stringify(next));
+      } catch {
+        /* offline or server down — will retry on next visit */
+      }
+    })();
+  }, [sectionId]);
+
+  useEffect(() => {
     const loadSection = async () => {
       if (!sectionId) return;
-      
+
       setLoading(true);
       setError(null);
-      
+
       try {
         const response = await fetch(`/content/sections/${sectionId}.json`);
         if (!response.ok) {
@@ -198,34 +280,77 @@ const CoursePage: React.FC = () => {
     navigate('/quiz');
   };
 
-  const handleConclusionSubmit = () => {
+  const handleConclusionSubmit = async () => {
+    if (conclusionLocked || conclusionSubmitting) return;
     if (!conclusionResponse.trim() || !aiDisclosure) {
       setToastMessage('Please complete both the response and AI disclosure before submitting.');
       setShowToast(true);
       return;
     }
 
-    // Save to localStorage
-    const conclusionData = {
-      response: conclusionResponse,
-      aiDisclosure: aiDisclosure,
-      otherExplanation: otherExplanation,
-      timestamp: new Date().toISOString()
-    };
-    localStorage.setItem('conclusion-response', JSON.stringify(conclusionData));
-
-    // Mark as complete
-    if (sectionId) {
-      setIsChecked(true);
-      setCompleted(sectionId, true);
-      setToastMessage('Response submitted successfully!');
+    if (aiDisclosure === 'Other' && !otherExplanation.trim()) {
+      setToastMessage('Please add a short explanation for “Other”.');
       setShowToast(true);
-      
-      // Show parting message modal after successful submission
-      setShowPartingModal(true);
-      
-      // Also dispatch custom event as fallback
-      window.dispatchEvent(new CustomEvent('openPartingMessage'));
+      return;
+    }
+
+    setConclusionSubmitting(true);
+    const sessionKey = getOrCreateLearnerSessionId();
+    const userName = getStoredUserName();
+
+    try {
+      const res = await fetch('/api/responses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_key: sessionKey,
+          section_id: 'conclusion',
+          user_name: userName || null,
+          response_text: conclusionResponse.trim(),
+          ai_disclosure: aiDisclosure.trim(),
+          other_explanation: otherExplanation.trim() || null,
+        }),
+      });
+
+      if (!res.ok) {
+        let msg = 'Could not save your response to the server.';
+        try {
+          const errBody = (await res.json()) as { error?: string; details?: string };
+          const d = typeof errBody.details === 'string' && errBody.details.trim() ? errBody.details.trim() : '';
+          msg = [errBody.error, d].filter(Boolean).join(' — ') || msg;
+        } catch {
+          /* ignore */
+        }
+        console.error('[CoursePage] POST /api/responses', res.status, msg);
+        setToastMessage(msg);
+        setShowToast(true);
+        return;
+      }
+
+      const conclusionData = {
+        response: conclusionResponse.trim(),
+        aiDisclosure,
+        otherExplanation,
+        timestamp: new Date().toISOString(),
+        syncedToDb: true,
+      };
+      localStorage.setItem('conclusion-response', JSON.stringify(conclusionData));
+      setConclusionLocked(true);
+
+      if (sectionId) {
+        setIsChecked(true);
+        setCompleted(sectionId, true);
+        setToastMessage('Response submitted and saved.');
+        setShowToast(true);
+        setShowPartingModal(true);
+        window.dispatchEvent(new CustomEvent('openPartingMessage'));
+      }
+    } catch (e) {
+      console.error('[CoursePage] conclusion submit', e);
+      setToastMessage('Network error while saving. Check your connection and try again.');
+      setShowToast(true);
+    } finally {
+      setConclusionSubmitting(false);
     }
   };
 
@@ -605,8 +730,14 @@ const CoursePage: React.FC = () => {
             value={conclusionResponse}
             onChange={(e) => setConclusionResponse(e.target.value)}
             placeholder="Please explain your reasoning for your earlier conclusion and justify your specific recommendation..."
-            className="w-full h-32 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 resize-none"
+            disabled={conclusionLocked}
+            className="w-full h-32 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 resize-none disabled:opacity-60 disabled:cursor-not-allowed"
           />
+          {conclusionLocked ? (
+            <p className="mt-3 text-sm font-medium text-green-700 dark:text-green-400">
+              Submitted — this response is locked and cannot be edited.
+            </p>
+          ) : null}
         </div>
 
         {/* AI Disclosure */}
@@ -617,13 +748,13 @@ const CoursePage: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Did you use AI to generate your earlier response?
           </p>
-          
-          <div className="space-y-3">
+
+          <div className={'space-y-3' + (conclusionLocked ? ' pointer-events-none opacity-80' : '')}>
             {[
               "I didn't use any AI when I wrote my earlier response.",
               "I consulted an AI tool for help, but I wrote my response myself.",
               "I used AI to generate most or all of my earlier response.",
-              "Other"
+              'Other',
             ].map((option, index) => (
               <label key={index} className="flex items-start space-x-3 cursor-pointer">
                 <input
@@ -632,20 +763,22 @@ const CoursePage: React.FC = () => {
                   value={option}
                   checked={aiDisclosure === option}
                   onChange={(e) => setAiDisclosure(e.target.value)}
-                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  disabled={conclusionLocked}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 disabled:cursor-not-allowed"
                 />
                 <span className="text-gray-700 dark:text-gray-300">{option}</span>
               </label>
             ))}
           </div>
 
-          {aiDisclosure === "Other" && (
+          {aiDisclosure === 'Other' && (
             <div className="mt-4">
               <textarea
                 value={otherExplanation}
                 onChange={(e) => setOtherExplanation(e.target.value)}
                 placeholder="Please explain..."
-                className="w-full h-20 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 resize-none"
+                disabled={conclusionLocked}
+                className="w-full h-20 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 resize-none disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
           )}
@@ -654,10 +787,12 @@ const CoursePage: React.FC = () => {
         {/* Action buttons */}
         <div className="flex flex-col sm:flex-row gap-4">
           <button
-            onClick={handleConclusionSubmit}
-            className="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-lg"
+            type="button"
+            onClick={() => void handleConclusionSubmit()}
+            disabled={conclusionLocked || conclusionSubmitting}
+            className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-lg"
           >
-            Submit Response
+            {conclusionLocked ? 'Submitted' : conclusionSubmitting ? 'Saving…' : 'Submit Response'}
           </button>
         </div>
       </div>

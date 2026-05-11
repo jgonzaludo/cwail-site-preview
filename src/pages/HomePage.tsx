@@ -1,27 +1,61 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { BookOpen, Users, FileText, Mail, Brain, Shield, Pencil, Zap, GraduationCap, Lightbulb } from 'lucide-react';
+import { BookOpen, Users, FileText, Mail, Brain, Shield, Pencil, Zap, GraduationCap, Lightbulb, UserX } from 'lucide-react';
 import { motion } from 'framer-motion';
 import GradientBackground from '../components/ui/gradient-background';
 import { RevealOnScroll } from '../components/RevealOnScroll';
 import ScrollIndicator from '../components/ScrollIndicator';
-import { getStoredUserName, persistUserNameForModule } from '../lib/learnerContext';
+import { getStoredUserName, persistUserNameForModule, clearStoredUserName } from '../lib/learnerContext';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const [learnerName, setLearnerName] = useState(() => getStoredUserName());
+  const storedName = getStoredUserName();
+  const hasStoredName = Boolean(storedName);
+  const [editingName, setEditingName] = useState(false);
+  const [draftName, setDraftName] = useState(() => getStoredUserName());
   const [nameError, setNameError] = useState('');
 
   const handleBegin = () => {
-    const n = learnerName.trim();
+    if (hasStoredName && !editingName) {
+      navigate('/course/introduction');
+      return;
+    }
+    const n = draftName.trim();
     if (!n) {
       setNameError('Please enter your name so we can personalize your certificate and summary.');
       return;
     }
     setNameError('');
     persistUserNameForModule(n);
+    setEditingName(false);
     navigate('/course/introduction');
   };
+
+  const handleRemoveUser = () => {
+    clearStoredUserName();
+    setDraftName('');
+    setEditingName(false);
+    setNameError('');
+  };
+
+  const handleStartEdit = () => {
+    setEditingName(true);
+    setDraftName(getStoredUserName());
+    setNameError('');
+  };
+
+  const handleSaveEdit = () => {
+    const n = draftName.trim();
+    if (!n) {
+      setNameError('Name cannot be empty.');
+      return;
+    }
+    persistUserNameForModule(n);
+    setEditingName(false);
+    setNameError('');
+  };
+
+  const showNameInput = !hasStoredName || editingName;
 
   return (
     <div className="min-h-screen">
@@ -65,30 +99,75 @@ const HomePage: React.FC = () => {
               transition={{ duration: 0.55, delay: 0.4 }}
               className="mt-10 max-w-md mx-auto w-full text-left"
             >
-              <label
-                htmlFor="home-learner-name"
-                className="block text-sm font-medium text-[#a7f3d0]/95"
-              >
-                Your name
-              </label>
+              <p className="block text-sm font-medium text-[#a7f3d0]/95">Your name</p>
               <p className="mt-1 text-xs text-[#a7f3d0]/75">
                 We&apos;ll use this on your completion summary and certificate.
               </p>
-              <input
-                id="home-learner-name"
-                type="text"
-                autoComplete="name"
-                value={learnerName}
-                onChange={(e) => {
-                  setLearnerName(e.target.value);
-                  if (nameError) setNameError('');
-                }}
-                placeholder="e.g. Alex Chen"
-                className="mt-3 w-full rounded-lg border border-white/30 bg-white/10 px-4 py-3 text-[#faf8f3] placeholder:text-[#faf8f3]/45 focus:outline-none focus:ring-2 focus:ring-[#fb923c] focus:border-transparent"
-              />
-              {nameError ? (
-                <p className="mt-2 text-sm text-amber-200">{nameError}</p>
-              ) : null}
+
+              {!showNameInput ? (
+                <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-white/25 bg-white/10 px-4 py-3">
+                  <span className="min-w-0 flex-1 text-base font-medium text-[#faf8f3] truncate">{storedName}</span>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={handleStartEdit}
+                      className="inline-flex items-center justify-center rounded-md border border-white/30 p-2 text-[#faf8f3] hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                      aria-label="Edit name"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveUser}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-white/30 px-3 py-2 text-xs font-medium text-[#fecaca] hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                    >
+                      <UserX className="h-3.5 w-3.5" aria-hidden />
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <label htmlFor="home-learner-name" className="sr-only">
+                    Your name
+                  </label>
+                  <input
+                    id="home-learner-name"
+                    type="text"
+                    autoComplete="name"
+                    value={draftName}
+                    onChange={(e) => {
+                      setDraftName(e.target.value);
+                      if (nameError) setNameError('');
+                    }}
+                    placeholder="e.g. Alex Chen"
+                    className="mt-3 w-full rounded-lg border border-white/30 bg-white/10 px-4 py-3 text-[#faf8f3] placeholder:text-[#faf8f3]/45 focus:outline-none focus:ring-2 focus:ring-[#fb923c] focus:border-transparent"
+                  />
+                  {hasStoredName ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleSaveEdit}
+                        className="rounded-md border border-white/35 bg-white/10 px-4 py-2 text-sm font-medium text-[#faf8f3] hover:bg-white/15"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingName(false);
+                          setDraftName(getStoredUserName());
+                          setNameError('');
+                        }}
+                        className="rounded-md px-4 py-2 text-sm font-medium text-[#a7f3d0]/90 hover:text-[#faf8f3]"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : null}
+                </>
+              )}
+              {nameError ? <p className="mt-2 text-sm text-amber-200">{nameError}</p> : null}
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}

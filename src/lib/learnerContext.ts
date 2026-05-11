@@ -1,6 +1,7 @@
 import { storage } from './storage';
 
 export const USER_NAME_KEY = 'user_name';
+const LEARNER_SESSION_KEY = 'cwail:learner_session_id';
 
 const INTRO_RESPONSE_KEY = 'cwail:response:introduction';
 const INTRO_LEGACY_KEY = 'cwail:response:intro_prompt';
@@ -56,7 +57,47 @@ export function persistUserNameForModule(name: string): void {
         typeof progress.course_id === 'string' && progress.course_id.trim() ?
           progress.course_id
         : 'cwail-ai-literacy',
-      user_name: trimmed,
+      ...(trimmed ? { user_name: trimmed } : {}),
     })
   );
+}
+
+/** Clear saved learner display name and remove it from merged progress (does not clear module progress). */
+export function clearStoredUserName(): void {
+  try {
+    localStorage.removeItem(USER_NAME_KEY);
+  } catch {
+    /* ignore */
+  }
+  let progress: Record<string, unknown> = {};
+  try {
+    const p = localStorage.getItem('progress_data');
+    if (p) progress = JSON.parse(p) as Record<string, unknown>;
+  } catch {
+    /* ignore */
+  }
+  const { user_name: _removed, ...rest } = progress;
+  try {
+    localStorage.setItem('progress_data', JSON.stringify(rest));
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Stable per-browser id for tying module responses (and future records) in the database.
+ */
+export function getOrCreateLearnerSessionId(): string {
+  try {
+    const existing = localStorage.getItem(LEARNER_SESSION_KEY)?.trim();
+    if (existing) return existing;
+    const id =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ?
+        crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+    localStorage.setItem(LEARNER_SESSION_KEY, id);
+    return id;
+  } catch {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+  }
 }

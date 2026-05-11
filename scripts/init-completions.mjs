@@ -29,4 +29,19 @@ CREATE TABLE IF NOT EXISTS completions (
 );
 `);
 
-console.log('Turso schema ready: completions');
+await client.execute(`
+CREATE TABLE IF NOT EXISTS learner_responses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_key TEXT NOT NULL,
+    section_id TEXT NOT NULL,
+    user_name TEXT,
+    response_text TEXT NOT NULL,
+    ai_disclosure TEXT,
+    other_explanation TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(session_key, section_id)
+);
+`);
+
+console.log('Turso schema ready: completions, learner_responses');
