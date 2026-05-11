@@ -190,6 +190,7 @@ const CoursePage: React.FC = () => {
         setShowAccordionTooltip(false);
         setResponseSubmittedThisSession(hasSubmittedResponse(sectionId));
         setSubmissionBoxSubmitted(hasSubmittedResponse(sectionId));
+        setOpenItems(new Set());
       } catch (err) {
         console.error('Failed to load section:', err);
         setError(err instanceof Error ? err.message : 'Failed to load section');

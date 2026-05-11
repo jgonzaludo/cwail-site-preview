@@ -74,6 +74,32 @@ function scallopedSealPath(cx: number, cy: number, bumps: number, rOuter: number
 
 const SEAL_PATH = scallopedSealPath(100, 100, 28, 88, 72);
 
+function QrPlaceholder({ muted = false }: { muted?: boolean }) {
+  const cells = [
+    0, 1, 2, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 25, 26, 28, 31, 33, 35, 36, 38, 40, 42,
+    43, 44, 46, 48,
+  ];
+
+  return (
+    <div
+      className={`grid h-[120px] w-[120px] grid-cols-7 gap-1 rounded-sm border bg-white p-2 ${
+        muted ? 'border-[#c8c4b8] opacity-55 grayscale' : 'border-[#0F2922]/30'
+      }`}
+      aria-label="QR code placeholder"
+      role="img"
+    >
+      {Array.from({ length: 49 }, (_, index) => (
+        <span
+          key={index}
+          className={`rounded-[1px] ${
+            cells.includes(index) ? (muted ? 'bg-[#8e8a80]' : 'bg-[#0F2922]') : 'bg-transparent'
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
 async function parseIssueErrorResponse(res: Response): Promise<{ message: string; raw: unknown }> {
   const text = await res.text();
   if (!text.trim()) {
@@ -95,6 +121,7 @@ const CertificatePage: React.FC = () => {
   const [hexId, setHexId] = useState<string | null>(null);
   const [issuedAt, setIssuedAt] = useState<string | null>(null);
   const [issueError, setIssueError] = useState<string | null>(null);
+  const [qrImageFailed, setQrImageFailed] = useState(false);
   const [busy, setBusy] = useState(true);
 
   const verifyBaseUrl =
@@ -162,6 +189,10 @@ const CertificatePage: React.FC = () => {
     return `https://quickchart.io/qr?text=${encodeURIComponent(`${verifyBaseUrl}/v/${hexId}`)}&size=250`;
   }, [hexId, verifyBaseUrl]);
 
+  useEffect(() => {
+    setQrImageFailed(false);
+  }, [qrUrl]);
+
   const displayId = hexId ? `CS-CWAIL-${hexId}` : '';
 
   const issuanceLabel = issuedAt
@@ -219,33 +250,41 @@ const CertificatePage: React.FC = () => {
 
       <div className="cert-print-target cert-surface mx-auto w-full max-w-[900px] shadow-2xl print:shadow-none">
         <div
-          className="cert-inner cert-document flex aspect-[900/636] w-full flex-col border-[16px] border-[#0F2922] bg-[#F2F0E9] p-6 text-[#0F2922] shadow-[inset_0_0_0_2px_#F2F0E9] sm:p-8 md:p-10"
-          style={{ colorScheme: 'light' }}
+          className="cert-inner cert-document flex aspect-[900/636] w-full flex-col justify-between border-[16px] border-[#0F2922] p-6 text-[#0F2922] shadow-[inset_0_0_0_2px_#F2F0E9] sm:p-8 md:p-10"
+          style={{
+            colorScheme: 'light',
+            background: 'radial-gradient(circle at center, #F2F0E9 0%, #F2F0E9 42%, #EBE9E1 100%)',
+          }}
         >
-          <div className="flex min-h-0 flex-1 flex-col items-center justify-start text-center">
+          <div className="text-center">
             <h1 className="font-cert-serif text-2xl font-semibold leading-snug tracking-wide text-[#0F2922] sm:text-3xl md:text-[2rem]">
               Certificate of Completion
             </h1>
             <div className="mx-auto mt-4 h-1 w-48 max-w-[85%] rounded-full bg-academy-orange" style={{ height: '4px' }} />
+          </div>
 
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center pt-8 text-center">
             <p className="mt-8 font-cert-sans text-sm font-normal text-[#4a5754]">This certifies that</p>
             <p className="font-cert-serif mt-3 text-3xl font-bold text-[#0F2922] sm:text-4xl md:text-5xl">
               {userName || '—'}
             </p>
-            <p className="mt-6 max-w-lg px-2 font-cert-sans text-base font-normal leading-relaxed text-[#4a5754] sm:text-lg">
-              successfully finished AI Literacy program
+            <p className="mt-7 font-cert-sans text-sm font-normal text-[#0F2922]/70">
+              successfully finished the
+            </p>
+            <p className="font-cert-serif mt-2 text-2xl font-bold text-[#F89B4E]">
+              AI Literacy Program
             </p>
           </div>
 
-          <div className="mt-auto grid w-full grid-cols-[1fr_auto_1fr] items-end gap-4 pt-6">
+          <div className="grid w-full grid-cols-[1fr_auto_1fr] items-end gap-4 pt-6">
             <div className="flex justify-start">
-              <div className="relative h-[120px] w-[120px] shrink-0 sm:h-[132px] sm:w-[132px]">
+              <div className="relative h-[140px] w-[140px] shrink-0">
                 <svg viewBox="0 0 200 200" className="h-full w-full text-[#0F2922]" aria-hidden>
                   <path d={SEAL_PATH} fill="currentColor" />
                   <circle cx="100" cy="100" r="52" fill="#F2F0E9" />
                 </svg>
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <CwailBookIcon className="h-[58px] w-[58px] text-[#0F2922] sm:h-[64px] sm:w-[64px]" />
+                  <CwailBookIcon className="h-[68px] w-[68px] text-[#0F2922]" />
                 </div>
               </div>
             </div>
@@ -259,27 +298,30 @@ const CertificatePage: React.FC = () => {
               {issuanceLabel ? (
                 <p className="font-cert-sans mt-0.5 text-xs text-[#0F2922]">{issuanceLabel}</p>
               ) : null}
-              <p className="font-cert-sans mt-2 text-[10px] font-medium uppercase tracking-[0.18em] text-[#4a5754]">
-                Unique ID
-              </p>
-              <p className="font-mono mt-0.5 text-[11px] text-[#0F2922]">{hexId ? displayId : '—'}</p>
             </div>
 
             <div className="flex justify-end">
-              <div className="flex w-[120px] flex-col items-center sm:w-[132px]">
+              <div className="flex w-[140px] flex-col items-center">
                 {busy && !hexId ? (
-                  <p className="font-cert-sans text-center text-xs text-[#4a5754]">Generating QR…</p>
-                ) : qrUrl ? (
+                  <QrPlaceholder muted />
+                ) : qrUrl && !qrImageFailed ? (
                   <img
                     src={qrUrl}
                     alt="Verification QR code"
                     width={250}
                     height={250}
-                    className="h-[120px] w-[120px] sm:h-[132px] sm:w-[132px]"
+                    className="h-[120px] w-[120px]"
+                    onError={() => setQrImageFailed(true)}
                   />
                 ) : (
-                  <p className="font-cert-sans text-center text-xs text-[#4a5754]">Verification unavailable</p>
+                  <QrPlaceholder muted={!hexId} />
                 )}
+                <p className="font-cert-sans mt-2 text-[8px] font-medium uppercase tracking-[0.14em] text-[#4a5754]">
+                  Unique ID
+                </p>
+                <p className="font-mono mt-0.5 text-[9px] leading-tight text-[#0F2922]">
+                  {hexId ? displayId : 'Pending'}
+                </p>
               </div>
             </div>
           </div>

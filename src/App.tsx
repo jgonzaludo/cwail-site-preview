@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -18,9 +18,20 @@ import CertificatePage from './pages/CertificatePage';
 import VerifyCertificatePage from './pages/VerifyCertificatePage';
 import { RequireQuizUnlocked } from './lib/guards';
 
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname, search]);
+
+  return null;
+}
+
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="min-h-screen flex flex-col text-cwail-ink">
         <Header />
         <motion.main
@@ -35,6 +46,7 @@ function App() {
             <Route path="/course/:sectionId" element={<CoursePage />} />
             <Route path="/lab/tokenization" element={<LabTokenization />} />
             <Route path="/celebration" element={<CelebrationPage />} />
+            <Route path="/completion" element={<Navigate to="/celebration" replace />} />
             <Route 
               path="/quiz" 
               element={
