@@ -263,15 +263,17 @@ const CertificatePage: React.FC = () => {
             <div className="mx-auto mt-4 h-1 w-48 max-w-[85%] rounded-full bg-academy-orange" style={{ height: '4px' }} />
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col items-center justify-center pt-8 text-center">
-            <p className="mt-8 font-cert-sans text-sm font-normal text-[#4a5754]">This certifies that</p>
-            <p className="font-cert-serif mt-3 text-3xl font-bold text-[#0F2922] sm:text-4xl md:text-5xl">
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center pt-10 text-center">
+            <p className="mt-8 font-cert-sans text-base font-normal text-[#4a5754] sm:text-lg">
+              This certifies that
+            </p>
+            <p className="font-cert-serif mt-4 text-4xl font-bold text-[#0F2922] sm:text-5xl md:text-6xl">
               {userName || '—'}
             </p>
-            <p className="mt-7 font-cert-sans text-sm font-normal text-[#0F2922]/70">
+            <p className="mt-9 font-cert-sans text-base font-normal text-[#0F2922]/70 sm:text-lg">
               successfully finished the
             </p>
-            <p className="font-cert-serif mt-2 text-2xl font-bold text-[#F89B4E]">
+            <p className="font-cert-serif mt-3 text-3xl font-bold text-[#F89B4E] sm:text-4xl">
               AI Literacy Program
             </p>
           </div>
