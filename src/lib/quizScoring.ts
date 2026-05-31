@@ -119,6 +119,35 @@ export function updateProgress(): void {
   markCompleted('final_quiz');
 }
 
+export function buildPerfectFinalQuizAnswers(questions: Question[]): Answer {
+  const out: Answer = {};
+  for (const q of questions) {
+    switch (q.type) {
+      case 'mcq-single':
+        if (q.correct.correctIndex !== undefined) {
+          out[q.id] = q.correct.correctIndex;
+        }
+        break;
+      case 'check-all':
+        if (q.correct.correctSet) {
+          out[q.id] = [...q.correct.correctSet];
+        }
+        break;
+      case 'ordering':
+        if (q.correct.correctOrder) {
+          out[q.id] = [...q.correct.correctOrder];
+        }
+        break;
+      case 'fill-blank':
+        out[q.id] = q.correct.text ?? '';
+        break;
+      default:
+        break;
+    }
+  }
+  return out;
+}
+
 export function calculateFinalQuizScore(
   answers: Answer,
   questions: Question[]

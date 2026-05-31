@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FileText } from 'lucide-react';
 import SectionNav from '../components/SectionNav';
+import CwailLogo from '../components/CwailLogo';
 import QuizPassedModal from '../components/QuizPassedModal';
 import Toast from '../components/Toast';
 import { ENABLE_CERT } from '../lib/flags';
 import { getAllRequiredSections, isCompleted } from '../lib/progress';
 import { 
   calculateScore,
+  buildPerfectQuizAnswers,
   saveQuizAnswers, 
   saveQuizResult, 
   getQuizAnswers, 
@@ -30,6 +32,8 @@ const QuizPage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [showPassedModal, setShowPassedModal] = useState(false);
+  const secretClickCountRef = useRef(0);
+  const secretClickTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Check if all required sections are completed
@@ -82,21 +86,22 @@ const QuizPage: React.FC = () => {
     });
   };
 
-  const handleSubmit = async () => {
+  const submitWithAnswers = async (answersToSubmit: Answer[]) => {
     if (!quiz) return;
 
     setSubmitting(true);
     try {
-      if (answers.length !== quiz.questions.length) {
-        throw new Error(`Please answer all questions. ${answers.length}/${quiz.questions.length} answered.`);
+      if (answersToSubmit.length !== quiz.questions.length) {
+        throw new Error(`Please answer all questions. ${answersToSubmit.length}/${quiz.questions.length} answered.`);
       }
 
-      const quizResult = calculateScore(answers, quiz.questions);
+      const quizResult = calculateScore(answersToSubmit, quiz.questions);
 
-      saveQuizAnswers(quiz.id, answers);
+      saveQuizAnswers(quiz.id, answersToSubmit);
       saveQuizResult(quiz.id, quizResult);
       markQuizCompleted(quiz.id);
 
+      setAnswers(answersToSubmit);
       setResult(quizResult);
       if (quizResult.score >= 8) {
         setShowPassedModal(true);
@@ -113,6 +118,36 @@ const QuizPage: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = async () => {
+    await submitWithAnswers(answers);
+  };
+
+  const handlePerfectScoreSubmit = async () => {
+    if (!quiz || result) return;
+    await submitWithAnswers(buildPerfectQuizAnswers(quiz.questions));
+  };
+
+  const handleSecretLogoClick = () => {
+    if (result || submitting) return;
+
+    if (secretClickTimerRef.current !== null) {
+      window.clearTimeout(secretClickTimerRef.current);
+    }
+
+    secretClickCountRef.current += 1;
+
+    if (secretClickCountRef.current >= 3) {
+      secretClickCountRef.current = 0;
+      void handlePerfectScoreSubmit();
+      return;
+    }
+
+    secretClickTimerRef.current = window.setTimeout(() => {
+      secretClickCountRef.current = 0;
+      secretClickTimerRef.current = null;
+    }, 2000);
   };
 
   const renderQuestion = (question: Question, index: number) => {
@@ -288,9 +323,19 @@ const QuizPage: React.FC = () => {
       
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="cwail-surface rounded-xl shadow-cwail dark:shadow-cwail-dark p-8">
-          <h1 className="text-3xl font-display font-bold text-cwail-ink mb-8">
-            {quiz.title}
-          </h1>
+          <div className="flex items-center gap-3 mb-8">
+            <button
+              type="button"
+              onClick={handleSecretLogoClick}
+              className="shrink-0 rounded-lg p-0.5 text-cwail-accent2 opacity-90 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-cwail-accent2/40"
+              aria-label="CWAIL"
+            >
+              <CwailLogo className="h-9 w-auto" />
+            </button>
+            <h1 className="text-3xl font-display font-bold text-cwail-ink">
+              {quiz.title}
+            </h1>
+          </div>
             
             {result ? (
               <div className="text-center py-8">

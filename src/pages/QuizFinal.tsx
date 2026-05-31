@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import SectionNav from '../components/SectionNav';
+import CwailLogo from '../components/CwailLogo';
 import QuizQuestion from '../components/QuizQuestion';
 import QuizResults from '../components/QuizResults';
 import QuizPassedModal from '../components/QuizPassedModal';
@@ -29,7 +30,8 @@ import {
   isCertificateEligible,
   clearAnswers,
   updateProgress,
-  calculateFinalQuizScore
+  calculateFinalQuizScore,
+  buildPerfectFinalQuizAnswers
 } from '../lib/quizScoring';
 
 const QuizFinal: React.FC = () => {
@@ -46,6 +48,8 @@ const QuizFinal: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [showPassedModal, setShowPassedModal] = useState(false);
+  const secretClickCountRef = useRef(0);
+  const secretClickTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     initializeQuiz();
@@ -99,10 +103,11 @@ const QuizFinal: React.FC = () => {
     saveAnswers(newAnswers);
   };
 
-  const handleSubmit = async () => {
-    // Validate all questions are answered
-    const unansweredQuestions = questions.filter(q => answers[q.id] === undefined || answers[q.id] === '');
-    
+  const submitWithAnswers = async (answersToSubmit: Answer) => {
+    const unansweredQuestions = questions.filter(
+      q => answersToSubmit[q.id] === undefined || answersToSubmit[q.id] === ''
+    );
+
     if (unansweredQuestions.length > 0) {
       setToastType('error');
       setToastMessage(`Please answer all questions. ${unansweredQuestions.length} questions remain unanswered.`);
@@ -112,11 +117,9 @@ const QuizFinal: React.FC = () => {
 
     setSubmitting(true);
     try {
-      // Calculate score
-      const result = calculateFinalQuizScore(answers, questions);
+      const result = calculateFinalQuizScore(answersToSubmit, questions);
       const passed = result.score >= 8;
-      
-      // Create attempt record
+
       const attempt: QuizAttempt = {
         attemptId: currentAttemptId,
         timestamp: new Date().toISOString(),
@@ -124,8 +127,7 @@ const QuizFinal: React.FC = () => {
         maxScore: result.maxScore,
         orderKey: `cwail:quiz:final:attemptOrder:${currentAttemptId}`
       };
-      
-      // Create score record
+
       const scoreRecord: QuizScore = {
         score: result.score,
         maxScore: result.maxScore,
@@ -133,17 +135,18 @@ const QuizFinal: React.FC = () => {
         timestamp: new Date().toISOString(),
         attemptId: currentAttemptId
       };
-      
-      // Save data
+
+      saveAnswers(answersToSubmit);
       saveAttempt(attempt);
       saveScore(scoreRecord);
       setAttempts(getAttempts());
-      
+
       if (passed) {
         setCertificateEligible(true);
         updateProgress();
       }
 
+      setAnswers(answersToSubmit);
       setScore(scoreRecord);
       setSubmitted(true);
       if (passed) {
@@ -153,7 +156,6 @@ const QuizFinal: React.FC = () => {
         setToastMessage('Quiz completed. You can retake it to improve your score.');
         setShowToast(true);
       }
-      
     } catch (error) {
       console.error('Failed to submit quiz:', error);
       setToastType('error');
@@ -162,6 +164,36 @@ const QuizFinal: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = async () => {
+    await submitWithAnswers(answers);
+  };
+
+  const handlePerfectScoreSubmit = async () => {
+    if (submitted) return;
+    await submitWithAnswers(buildPerfectFinalQuizAnswers(questions));
+  };
+
+  const handleSecretLogoClick = () => {
+    if (submitted || submitting) return;
+
+    if (secretClickTimerRef.current !== null) {
+      window.clearTimeout(secretClickTimerRef.current);
+    }
+
+    secretClickCountRef.current += 1;
+
+    if (secretClickCountRef.current >= 3) {
+      secretClickCountRef.current = 0;
+      void handlePerfectScoreSubmit();
+      return;
+    }
+
+    secretClickTimerRef.current = window.setTimeout(() => {
+      secretClickCountRef.current = 0;
+      secretClickTimerRef.current = null;
+    }, 2000);
   };
 
   const handleRetake = () => {
@@ -212,9 +244,19 @@ const QuizFinal: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="cwail-surface rounded-xl shadow-cwail dark:shadow-cwail-dark p-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-display font-bold text-cwail-ink mb-2">
-              CWAIL Final Quiz
-            </h1>
+            <div className="flex items-center gap-3 mb-2">
+              <button
+                type="button"
+                onClick={handleSecretLogoClick}
+                className="shrink-0 rounded-lg p-0.5 text-cwail-accent2 opacity-90 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-cwail-accent2/40"
+                aria-label="CWAIL"
+              >
+                <CwailLogo className="h-9 w-auto" />
+              </button>
+              <h1 className="text-3xl font-display font-bold text-cwail-ink">
+                CWAIL Final Quiz
+              </h1>
+            </div>
             <p className="text-gray-600 dark:text-gray-400">
               Test your understanding of AI and writing. You need 8/10 correct answers to pass.
             </p>

@@ -34,6 +34,42 @@ export interface QuizResult {
   timestamp: string;
 }
 
+function buildCorrectAnswersForQuestions(questions: Question[]): Answer[] {
+  const out: Answer[] = [];
+  for (const q of questions) {
+    switch (q.type) {
+      case 'multipleChoiceSingle':
+        if (typeof q.correctAnswer === 'string') {
+          out.push({ questionId: q.id, value: q.correctAnswer });
+        }
+        break;
+      case 'multipleChoiceMultiple':
+        if (Array.isArray(q.correctAnswer)) {
+          out.push({ questionId: q.id, value: [...q.correctAnswer] });
+        } else if (typeof q.correctAnswer === 'string') {
+          out.push({ questionId: q.id, value: [q.correctAnswer] });
+        }
+        break;
+      case 'shortAnswer':
+        out.push({ questionId: q.id, value: String(q.correctAnswer ?? '') });
+        break;
+      case 'likert':
+        out.push({ questionId: q.id, value: q.options?.[0] ?? '' });
+        break;
+      case 'code':
+        out.push({ questionId: q.id, value: '—' });
+        break;
+      default:
+        break;
+    }
+  }
+  return out;
+}
+
+export function buildPerfectQuizAnswers(questions: Question[]): Answer[] {
+  return buildCorrectAnswersForQuestions(questions);
+}
+
 export function calculateScore(answers: Answer[], questions: Question[]): QuizResult {
   const details: QuizResult['details'] = [];
   let totalEarned = 0;
