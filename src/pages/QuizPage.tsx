@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FileText } from 'lucide-react';
 import SectionNav from '../components/SectionNav';
+import QuizPassedModal from '../components/QuizPassedModal';
 import Toast from '../components/Toast';
 import { ENABLE_CERT } from '../lib/flags';
 import { getAllRequiredSections, isCompleted } from '../lib/progress';
 import { 
   calculateScore,
-  buildCorrectAnswersForQuestions,
   saveQuizAnswers, 
   saveQuizResult, 
   getQuizAnswers, 
@@ -29,6 +29,7 @@ const QuizPage: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [showPassedModal, setShowPassedModal] = useState(false);
 
   useEffect(() => {
     // Check if all required sections are completed
@@ -97,46 +98,17 @@ const QuizPage: React.FC = () => {
       markQuizCompleted(quiz.id);
 
       setResult(quizResult);
-      setToastType('success');
-      setToastMessage('Quiz submitted successfully!');
-      setShowToast(true);
+      if (quizResult.score >= 8) {
+        setShowPassedModal(true);
+      } else {
+        setToastType('success');
+        setToastMessage('Quiz submitted successfully!');
+        setShowToast(true);
+      }
     } catch (error) {
       console.error('Failed to submit quiz:', error);
       setToastType('error');
       setToastMessage(`Failed to submit quiz: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setShowToast(true);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handlePerfectScoreSubmit = () => {
-    if (!quiz || result) return;
-
-    setSubmitting(true);
-    try {
-      const perfectAnswers = buildCorrectAnswersForQuestions(quiz.questions);
-      if (perfectAnswers.length !== quiz.questions.length) {
-        throw new Error('Could not build answers for all questions.');
-      }
-
-      const quizResult = calculateScore(perfectAnswers, quiz.questions);
-
-      saveQuizAnswers(quiz.id, perfectAnswers);
-      saveQuizResult(quiz.id, quizResult);
-      markQuizCompleted(quiz.id);
-
-      setAnswers(perfectAnswers);
-      setResult(quizResult);
-      setToastType('success');
-      setToastMessage(`Submitted with all correct answers: ${quizResult.score}/${quizResult.maxScore}.`);
-      setShowToast(true);
-    } catch (error) {
-      console.error('Perfect score submit failed:', error);
-      setToastType('error');
-      setToastMessage(
-        `Could not apply perfect score: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
       setShowToast(true);
     } finally {
       setSubmitting(false);
@@ -418,36 +390,30 @@ const QuizPage: React.FC = () => {
                   {quiz.questions.map((question, index) => renderQuestion(question, index))}
                 </div>
                 
-                <div className="flex flex-col items-stretch sm:items-end gap-3 w-full">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 text-right">
+                <div className="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     Questions answered: {answers.length}/{quiz.questions.length}
                   </div>
-                  <div className="flex flex-col sm:flex-row flex-wrap gap-3 justify-end">
-                    <button
-                      type="button"
-                      onClick={handlePerfectScoreSubmit}
-                      disabled={submitting}
-                      className="inline-flex items-center justify-center px-6 py-3 border-2 border-cwail-accent2 text-cwail-accent2 hover:bg-cwail-accent2/10 font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-cwail-accent2 focus:ring-offset-2 disabled:opacity-50"
-                    >
-                      Submit perfect score ({quiz.questions.length}/{quiz.questions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSubmit}
-                      disabled={submitting || answers.length !== quiz.questions.length}
-                      className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-lg"
-                    >
-                      {submitting ? 'Submitting...' : 'Submit Quiz'}
-                    </button>
-                  </div>
-                  <p className="text-xs text-cwail-muted text-right max-w-md ml-auto">
-                    &ldquo;Submit perfect score&rdquo; fills every question with the correct choices and saves a passing result—same as getting every item right.
-                  </p>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={submitting || answers.length !== quiz.questions.length}
+                    className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-lg"
+                  >
+                    {submitting ? 'Submitting...' : 'Submit Quiz'}
+                  </button>
                 </div>
               </div>
             )}
         </div>
       </div>
+
+      <QuizPassedModal
+        isOpen={showPassedModal}
+        onClose={() => setShowPassedModal(false)}
+        score={result?.score ?? 0}
+        maxScore={result?.maxScore ?? 10}
+      />
 
       {/* Toast Notification */}
       {showToast && (

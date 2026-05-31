@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import SectionNav from '../components/SectionNav';
 import QuizQuestion from '../components/QuizQuestion';
 import QuizResults from '../components/QuizResults';
+import QuizPassedModal from '../components/QuizPassedModal';
 import Toast from '../components/Toast';
 import finalQuiz from '../data/finalQuiz';
 import {
@@ -44,6 +45,7 @@ const QuizFinal: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [showPassedModal, setShowPassedModal] = useState(false);
 
   useEffect(() => {
     initializeQuiz();
@@ -144,9 +146,13 @@ const QuizFinal: React.FC = () => {
 
       setScore(scoreRecord);
       setSubmitted(true);
-      setToastType('success');
-      setToastMessage(passed ? 'Quiz completed successfully!' : 'Quiz completed. You can retake it to improve your score.');
-      setShowToast(true);
+      if (passed) {
+        setShowPassedModal(true);
+      } else {
+        setToastType('success');
+        setToastMessage('Quiz completed. You can retake it to improve your score.');
+        setShowToast(true);
+      }
       
     } catch (error) {
       console.error('Failed to submit quiz:', error);
@@ -272,6 +278,13 @@ const QuizFinal: React.FC = () => {
           )}
         </div>
       </div>
+
+      <QuizPassedModal
+        isOpen={showPassedModal}
+        onClose={() => setShowPassedModal(false)}
+        score={score?.score ?? 0}
+        maxScore={score?.maxScore ?? 10}
+      />
 
       {/* Toast Notification */}
       {showToast && (
